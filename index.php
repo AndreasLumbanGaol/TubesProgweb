@@ -279,14 +279,14 @@
         <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 movie-grid">
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://image.tmdb.org/t/p/w500/t6HIqrHe1b0aV780P7213I6B1l.jpg" class="movie-poster" alt="Avatar">
+                    <img src="https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg" class="movie-poster" alt="Avatar">
                     <p class="movie-title">AVATAR: The Way of Water</p>
                     <p class="movie-duration">3h 12m</p>
                 </div>
             </div>
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://image.tmdb.org/t/p/w500/udDclJoHjfpt8PnF8X9w1sNl3G.jpg" class="movie-poster" alt="Joker">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" class="movie-poster" alt="Joker">
                     <p class="movie-title">JOKER: Put On A Happy Face</p>
                     <p class="movie-duration">60m</p>
                 </div>
@@ -307,14 +307,14 @@
             </div>
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://image.tmdb.org/t/p/w500/RYMX2wcKCBAr24UyPD7xrmstKX.jpg" class="movie-poster" alt="Avengers">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" class="movie-poster" alt="Avengers">
                     <p class="movie-title">Avengers</p>
                     <p class="movie-duration">3h 1m</p>
                 </div>
             </div>
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://via.placeholder.com/300x450/444444/d4af37?text=Ghost+In+The+Cell" class="movie-poster" alt="Ghost">
+                    <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg" class="movie-poster" alt="Ghost">
                     <p class="movie-title">Ghost In The Cell</p>
                     <p class="movie-duration">1h 46m</p>
                 </div>
