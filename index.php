@@ -238,7 +238,7 @@
                     <a href="login.php" class="login-button">
                         LOG IN / SIGN UP
                     </a>
-                    <a href="#">
+                    <a href="profile.php">
                         <img src="https://static.vecteezy.com/system/resources/thumbnails/007/033/146/small/profile-icon-login-head-icon-vector.jpg" 
                              alt="Profile Icon" 
                              class="profile-icon">
@@ -257,15 +257,6 @@
                     <h1 class="hero-title">GHOST IN THE CELL</h1>
                     <p class="hero-subtitle">BUY 1 GET 1 FREE TICKET</p>
                     <button class="hero-button">GET YOUR TICKET</button>
-                </div>
-            </div>
-
-            <div class="carousel-item" data-bs-interval="4000">
-                <img src="https://images.unsplash.com/photo-1440404653325-ab127d49abc1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" class="d-block w-100 carousel-img" alt="Gala Premiere">
-                <div class="carousel-caption hero-content">
-                    <h1 class="hero-title">GALA PREMIERE</h1>
-                    <p class="hero-subtitle">AMANKAN KURSIMU LEBIH AWAL DENGAN PRE-ORDER</p>
-                    <button class="hero-button hero-button-gold">LIHAT JADWAL</button>
                 </div>
             </div>
 
@@ -367,7 +358,6 @@
             <div class="col">
                 <div class="card movie-card">
                     <div class="poster-wrapper">
-                        <span class="badge-presale">Presale</span>
                         <img src="https://bit.ly/4v8IiMK" class="movie-poster" alt="Sonic 3">
                     </div>
                     <p class="movie-title">SONIC 4: The Hedgehog</p>
@@ -376,7 +366,6 @@
             <div class="col">
                 <div class="card movie-card">
                     <div class="poster-wrapper">
-                        <span class="badge-presale">Presale</span>
                         <img src="https://cinemags.org/?attachment_id=192228" class="movie-poster" alt="Spider-Man">
                     </div>
                     <p class="movie-title">Spider-man: Across The Spider Verse</p>
