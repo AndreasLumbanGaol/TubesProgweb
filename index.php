@@ -251,7 +251,7 @@
             <div class="carousel-item active" data-bs-interval="4000">
                 <img src="https://cloud.jpnn.com/photo/arsip/normal/2025/12/07/teaser-poster-film-ghost-in-the-cell-foto-dok-come-and-see-n-ufoh.jpg" class="d-block w-100 carousel-img" alt="Ghost in the Cell">
                 <div class="carousel-caption hero-content">
-                    <h1 class="hero-title">GHOST IN THE CELL</h1>
+                    <h1 class="hero-title">ANDRE PACARNYA 10</h1>
                     <p class="hero-subtitle">BUY 1 GET 1 FREE TICKET</p>
                     <button class="hero-button">GET YOUR TICKET</button>
                 </div>
