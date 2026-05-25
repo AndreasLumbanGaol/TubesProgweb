@@ -176,13 +176,35 @@
             cursor: pointer; 
         }
         .movie-card:hover { transform: scale(1.05); }
+        
+        /* Pembungkus poster agar posisi badge presale absolut terhadap poster */
+        .poster-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 10px;
+        }
         .movie-poster { 
             border-radius: 10px; 
             width: 100%; 
             aspect-ratio: 2/3; 
             object-fit: cover; 
-            margin-bottom: 10px; 
+            margin-bottom: 0; 
         }
+        
+        /* Badge Presale Kuning */
+        .badge-presale {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #c99a49;
+            color: #000000;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 12px;
+            border-radius: 20px;
+            z-index: 2;
+        }
+
         .movie-title { 
             color: #d4af37; 
             font-size: 14px; 
@@ -230,7 +252,7 @@
         <div class="carousel-inner">
 
             <div class="carousel-item active" data-bs-interval="4000">
-                <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1925&q=80" class="d-block w-100 carousel-img" alt="Ghost in the Cell">
+                <img src="https://cloud.jpnn.com/photo/arsip/normal/2025/12/07/teaser-poster-film-ghost-in-the-cell-foto-dok-come-and-see-n-ufoh.jpg" class="d-block w-100 carousel-img" alt="Ghost in the Cell">
                 <div class="carousel-caption hero-content">
                     <h1 class="hero-title">GHOST IN THE CELL</h1>
                     <p class="hero-subtitle">BUY 1 GET 1 FREE TICKET</p>
@@ -248,7 +270,7 @@
             </div>
 
             <div class="carousel-item" data-bs-interval="4000">
-                <img src="https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" class="d-block w-100 carousel-img" alt="Diskon Tixly">
+                <img src="https://galalitescreens.com/wp-content/uploads/2017/11/cinema-theatre.webp" class="d-block w-100 carousel-img" alt="Diskon Tixly">
                 <div class="carousel-caption hero-content">
                     <h1 class="hero-title">WEEKEND SPECIAL</h1>
                     <p class="hero-subtitle">CASHBACK 50% VIA GOPAY</p>
@@ -269,6 +291,7 @@
     </div>
 
     <div class="container movies-section">
+        
         <div class="section-header">
             <h2 class="section-title">NOW SHOWING</h2>
             <div class="location-badge">
@@ -279,47 +302,112 @@
         <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 movie-grid">
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg" class="movie-poster" alt="Avatar">
+                    <div class="poster-wrapper">
+                        <img src="https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg" class="movie-poster" alt="Avatar">
+                    </div>
                     <p class="movie-title">AVATAR: The Way of Water</p>
                     <p class="movie-duration">3h 12m</p>
                 </div>
             </div>
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" class="movie-poster" alt="Joker">
+                    <div class="poster-wrapper">
+                        <img src="https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" class="movie-poster" alt="Joker">
+                    </div>
                     <p class="movie-title">JOKER: Put On A Happy Face</p>
                     <p class="movie-duration">60m</p>
                 </div>
             </div>
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg" class="movie-poster" alt="Wonka">
+                    <div class="poster-wrapper">
+                        <img src="https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg" class="movie-poster" alt="Wonka">
+                    </div>
                     <p class="movie-title">Wonka</p>
                     <p class="movie-duration">1h 56m</p>
                 </div>
             </div>
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://image.tmdb.org/t/p/w500/r7XifzvtezNt31ypvsmb6Oqxw49.jpg" class="movie-poster" alt="Guardians">
+                    <div class="poster-wrapper">
+                        <img src="https://image.tmdb.org/t/p/w500/r7XifzvtezNt31ypvsmb6Oqxw49.jpg" class="movie-poster" alt="Guardians">
+                    </div>
                     <p class="movie-title">Guardians of The Galaxy</p>
                     <p class="movie-duration">2h 1m</p>
                 </div>
             </div>
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" class="movie-poster" alt="Avengers">
+                    <div class="poster-wrapper">
+                        <img src="https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" class="movie-poster" alt="Avengers">
+                    </div>
                     <p class="movie-title">Avengers</p>
                     <p class="movie-duration">3h 1m</p>
                 </div>
             </div>
             <div class="col">
                 <div class="card movie-card">
-                    <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg" class="movie-poster" alt="Ghost">
+                    <div class="poster-wrapper">
+                        <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg" class="movie-poster" alt="Ghost">
+                    </div>
                     <p class="movie-title">Ghost In The Cell</p>
                     <p class="movie-duration">1h 46m</p>
                 </div>
             </div>
         </div>
+
+        <div class="section-header" style="margin-top: 60px;">
+            <h2 class="section-title">COMING SOON</h2>
+            <div class="location-badge">
+                Bandung
+            </div>
+        </div>
+
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 movie-grid">
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <span class="badge-presale">Presale</span>
+                        <img src="https://bit.ly/4v8IiMK" class="movie-poster" alt="Sonic 3">
+                    </div>
+                    <p class="movie-title">SONIC 4: The Hedgehog</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <span class="badge-presale">Presale</span>
+                        <img src="https://cinemags.org/?attachment_id=192228" class="movie-poster" alt="Spider-Man">
+                    </div>
+                    <p class="movie-title">Spider-man: Across The Spider Verse</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <img src="https://posterspy.com/wp-content/uploads/2024/01/PosterSpy-Man-of-Tomorrow-Teaser-version-site.jpg" class="movie-poster" alt="Man of Tomorrow">
+                    </div>
+                    <p class="movie-title">Man Of Tomorrow</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTaU3-BIeHwacBlx1pr2juR3RH-yhNN06rgdw&s" class="movie-poster" alt="Minion and Monster">
+                    </div>
+                    <p class="movie-title">Minion & Monsters</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBVpQ2G6WhTrJfC0i0_NiJjxh10EncCx3ujg&s" class="movie-poster" alt="Frozen II">
+                    </div>
+                    <p class="movie-title">Frozen III</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
