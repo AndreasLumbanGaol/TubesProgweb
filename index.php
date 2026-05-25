@@ -110,8 +110,7 @@
             margin-bottom: 30px; 
         }
         
-        /* Buttons */
-        .hero-button { 
+       .hero-button { 
             background-color: #b30000; 
             color: white; 
             padding: 10px 30px; 
@@ -176,8 +175,7 @@
             cursor: pointer; 
         }
         .movie-card:hover { transform: scale(1.05); }
-        
-        /* Pembungkus poster agar posisi badge presale absolut terhadap poster */
+
         .poster-wrapper {
             position: relative;
             width: 100%;
@@ -191,7 +189,6 @@
             margin-bottom: 0; 
         }
         
-        /* Badge Presale Kuning */
         .badge-presale {
             position: absolute;
             top: 10px;
