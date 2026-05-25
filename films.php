@@ -126,12 +126,33 @@
             cursor: pointer; 
         }
         .movie-card:hover { transform: scale(1.05); }
+        
+        /* Pembungkus posisi badge presale */
+        .poster-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
         .movie-poster { 
             border-radius: 10px; 
             width: 100%; 
             aspect-ratio: 2/3; 
             object-fit: cover; 
             margin-bottom: 10px; 
+        }
+        
+        /* Badge Presale Kuning */
+        .badge-presale {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #c99a49;
+            color: #000000;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 12px;
+            border-radius: 20px;
+            z-index: 2;
         }
         
         .poster-highlight { 
@@ -190,7 +211,6 @@
         </div>
 
         <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 movie-grid">
-            
             <div class="col">
                 <a href="booking.php" class="movie-link">
                     <div class="card movie-card">
@@ -300,8 +320,58 @@
                     </div>
                 </a>
             </div>
-
         </div>
+
+        <div class="section-header" style="margin-top: 60px;">
+            <h2 class="section-title">COMING SOON</h2>
+            <div class="location-badge">
+                Bandung
+            </div>
+        </div>
+
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 movie-grid">
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <img src="https://bit.ly/4v8IiMK" class="movie-poster" alt="Sonic 3">
+                    </div>
+                    <p class="movie-title">SONIC 4: The Hedgehog</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <img src="https://cinemags.org/?attachment_id=192228" class="movie-poster" alt="Spider-Man">
+                    </div>
+                    <p class="movie-title">Spider-man: Across The Spider Verse</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <img src="https://posterspy.com/wp-content/uploads/2024/01/PosterSpy-Man-of-Tomorrow-Teaser-version-site.jpg" class="movie-poster" alt="Man of Tomorrow">
+                    </div>
+                    <p class="movie-title">Man Of Tomorrow</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTaU3-BIeHwacBlx1pr2juR3RH-yhNN06rgdw&s" class="movie-poster" alt="Minion and Monster">
+                    </div>
+                    <p class="movie-title">Minion & Monsters</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card movie-card">
+                    <div class="poster-wrapper">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBVpQ2G6WhTrJfC0i0_NiJjxh10EncCx3ujg&s" class="movie-poster" alt="Frozen II">
+                    </div>
+                    <p class="movie-title">Frozen III</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
