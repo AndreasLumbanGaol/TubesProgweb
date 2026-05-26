@@ -253,7 +253,7 @@
                 <div class="carousel-caption hero-content">
                     <h1 class="hero-title">GHOST IN THE CELL</h1>
                     <p class="hero-subtitle">BUY 1 GET 1 FREE TICKET</p>
-                    <button class="hero-button">GET YOUR TICKET</button>
+                    <button class="hero-button">DAPATKAN TIKETMU DISINI</button>
                 </div>
             </div>
 
