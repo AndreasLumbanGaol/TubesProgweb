@@ -1,3 +1,13 @@
+<?php
+$movie = isset($_GET['movie']) ? $_GET['movie'] : 'Wonka';
+$poster = isset($_GET['poster']) ? $_GET['poster'] : 'https://image.tmdb.org/t/p/w200/qhb1qOilapbapxWQn9jtRCMwXJF.jpg';
+$duration = isset($_GET['duration']) ? $_GET['duration'] : '1h 56m';
+$cinema = isset($_GET['cinema']) ? $_GET['cinema'] : 'CGV Paskal 23';
+$type = isset($_GET['type']) ? $_GET['type'] : 'Regular';
+$price = isset($_GET['price']) ? intval($_GET['price']) : 50000;
+$date = isset($_GET['date']) ? $_GET['date'] : 'Hari Ini';
+$time = isset($_GET['time']) ? $_GET['time'] : '19:30';
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -323,7 +333,7 @@
 
                         <div class="seat-row"><div class="seat-label">D</div>
                             <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div><div class="seat-gap"></div>
-                            <div class="seat-group"><div class="seat selected"></div><div class="seat selected"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div>
+                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div>
                         </div>
 
                         <div class="seat-row"><div class="seat-label">E</div>
@@ -362,34 +372,34 @@
                     <h5 class="summary-title">Ringkasan Pesanan</h5>
                     
                     <div class="movie-info">
-                        <img src="https://image.tmdb.org/t/p/w200/qhb1qOilapbapxWQn9jtRCMwXJF.jpg" class="movie-poster" alt="Wonka">
+                        <img src="<?php echo htmlspecialchars($poster); ?>" class="movie-poster" alt="<?php echo htmlspecialchars($movie); ?>">
                         <div class="movie-details">
-                            <h6>Wonka</h6>
-                            <p>Hari Ini - 19:30</p>
-                            <p>CGV Paskal 23 - D7,D8</p>
+                            <h6><?php echo htmlspecialchars($movie); ?></h6>
+                            <p><?php echo htmlspecialchars($date); ?> - <?php echo htmlspecialchars($time); ?></p>
+                            <p><?php echo htmlspecialchars($cinema); ?> - <span id="summary-seats-label">Belum ada kursi</span></p>
                         </div>
                     </div>
 
                     <div class="ticket-section">
                         <p class="ticket-label">Kursi Dipilih</p>
-                        <h5 class="ticket-seats">D7, D8</h5>
+                        <h5 class="ticket-seats" id="ticket-seats-display">Belum ada kursi</h5>
 
-                        <div class="price-row">
-                            <span>2x Tiket Regular</span>
-                            <span>Rp 120.000</span>
+                        <div class="price-row" id="ticket-price-row" style="display: none;">
+                            <span id="ticket-count-label">0x Tiket <?php echo htmlspecialchars($type); ?></span>
+                            <span id="ticket-subtotal-display">Rp 0</span>
                         </div>
-                        <div class="price-row price-row-last">
+                        <div class="price-row price-row-last" id="service-fee-row" style="display: none;">
                             <span>Biaya Layanan</span>
                             <span>Rp 3.000</span>
                         </div>
                         
                         <div class="total-row">
                             <span class="total-label">Total Bayar</span>
-                            <span class="total-price">Rp 123.000</span>
+                            <span class="total-price" id="total-price-display">Rp 0</span>
                         </div>
                     </div>
 
-                    <a href="payment.php" class="btn-checkout">
+                    <a href="#" class="btn-checkout disabled" id="checkout-button" style="pointer-events: none; opacity: 0.5;">
                         Lanjutkan ke Pembayaran &rarr;
                     </a>
 
@@ -402,12 +412,117 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        const seats = document.querySelectorAll('.seat:not(.occupied)');
-        seats.forEach(seat => {
-            seat.addEventListener('click', () => {
-                seat.classList.toggle('selected');
+        // Parameters from PHP
+        const ticketType = "<?php echo htmlspecialchars($type); ?>";
+        const ticketPrice = <?php echo $price; ?>;
+        const movieTitle = "<?php echo addslashes($movie); ?>";
+        const moviePoster = "<?php echo addslashes($poster); ?>";
+        const movieDuration = "<?php echo addslashes($duration); ?>";
+        const cinemaName = "<?php echo addslashes($cinema); ?>";
+        const bookingDate = "<?php echo addslashes($date); ?>";
+        const bookingTime = "<?php echo addslashes($time); ?>";
+
+        let selectedSeats = [];
+
+        // Auto-assign seat names based on row label and position
+        document.querySelectorAll('.seat-row').forEach(row => {
+            const rowLabel = row.querySelector('.seat-label').textContent.trim();
+            const seatsInRow = row.querySelectorAll('.seat');
+            seatsInRow.forEach((seat, index) => {
+                const seatNum = index + 1;
+                const seatName = rowLabel + seatNum;
+                seat.setAttribute('data-seat-name', seatName);
+                
+                // If it is hardcoded as selected, add it to selectedSeats
+                if (seat.classList.contains('selected') && !seat.classList.contains('occupied')) {
+                    selectedSeats.push(seatName);
+                }
             });
         });
+
+        // Update booking summary
+        function updateSummary() {
+            const ticketCount = selectedSeats.length;
+            const subtotal = ticketCount * ticketPrice;
+            const serviceFee = 3000;
+            const total = ticketCount > 0 ? subtotal + serviceFee : 0;
+
+            // Elements
+            const seatsDisplay = document.getElementById('ticket-seats-display');
+            const seatsLabel = document.getElementById('summary-seats-label');
+            const priceRow = document.getElementById('ticket-price-row');
+            const countLabel = document.getElementById('ticket-count-label');
+            const subtotalDisplay = document.getElementById('ticket-subtotal-display');
+            const serviceRow = document.getElementById('service-fee-row');
+            const totalDisplay = document.getElementById('total-price-display');
+            const checkoutButton = document.getElementById('checkout-button');
+
+            if (ticketCount > 0) {
+                // Update seats list
+                const seatsString = selectedSeats.join(', ');
+                seatsDisplay.textContent = seatsString;
+                seatsLabel.textContent = seatsString;
+
+                // Update pricing details
+                priceRow.style.display = 'flex';
+                countLabel.textContent = `${ticketCount}x Tiket ${ticketType}`;
+                subtotalDisplay.textContent = 'Rp ' + subtotal.toLocaleString('id-ID');
+                
+                serviceRow.style.display = 'flex';
+                totalDisplay.textContent = 'Rp ' + total.toLocaleString('id-ID');
+
+                // Enable checkout button and construct dynamic URL
+                checkoutButton.classList.remove('disabled');
+                checkoutButton.style.pointerEvents = 'auto';
+                checkoutButton.style.opacity = '1';
+
+                const queryParams = new URLSearchParams({
+                    movie: movieTitle,
+                    poster: moviePoster,
+                    duration: movieDuration,
+                    cinema: cinemaName,
+                    type: ticketType,
+                    price: ticketPrice,
+                    date: bookingDate,
+                    time: bookingTime,
+                    seats: seatsString,
+                    total: total
+                });
+                checkoutButton.href = 'payment.php?' + queryParams.toString();
+            } else {
+                seatsDisplay.textContent = 'Belum ada kursi';
+                seatsLabel.textContent = 'Belum ada kursi';
+                priceRow.style.display = 'none';
+                serviceRow.style.display = 'none';
+                totalDisplay.textContent = 'Rp 0';
+
+                // Disable checkout button
+                checkoutButton.classList.add('disabled');
+                checkoutButton.style.pointerEvents = 'none';
+                checkoutButton.style.opacity = '0.5';
+                checkoutButton.href = '#';
+            }
+        }
+
+        // Add click event listeners to seats
+        document.querySelectorAll('.seat:not(.occupied)').forEach(seat => {
+            seat.addEventListener('click', () => {
+                const seatName = seat.getAttribute('data-seat-name');
+                
+                if (seat.classList.contains('selected')) {
+                    seat.classList.remove('selected');
+                    selectedSeats = selectedSeats.filter(s => s !== seatName);
+                } else {
+                    seat.classList.add('selected');
+                    selectedSeats.push(seatName);
+                }
+                
+                updateSummary();
+            });
+        });
+
+        // Initialize on load
+        updateSummary();
     </script>
 </body>
 </html>

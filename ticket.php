@@ -1,3 +1,33 @@
+<?php
+$movie = isset($_GET['movie']) ? $_GET['movie'] : 'Wonka';
+$poster = isset($_GET['poster']) ? $_GET['poster'] : 'https://image.tmdb.org/t/p/w200/qhb1qOilapbapxWQn9jtRCMwXJF.jpg';
+$duration = isset($_GET['duration']) ? $_GET['duration'] : '1h 56m';
+$cinema = isset($_GET['cinema']) ? $_GET['cinema'] : 'CGV Paskal 23';
+$type = isset($_GET['type']) ? $_GET['type'] : 'Regular';
+$price = isset($_GET['price']) ? intval($_GET['price']) : 50000;
+$date = isset($_GET['date']) ? $_GET['date'] : 'Hari Ini';
+$time = isset($_GET['time']) ? $_GET['time'] : '19:30';
+$seats = isset($_GET['seats']) ? $_GET['seats'] : 'D7,D8';
+$total = isset($_GET['total']) ? intval($_GET['total']) : 103000;
+$method = isset($_GET['method']) ? $_GET['method'] : 'OVO';
+
+$seat_array = explode(',', $seats);
+$seat_count = count($seat_array);
+if ($seats === '' || empty($seats)) {
+    $seat_count = 0;
+}
+$subtotal = $seat_count * $price;
+
+// Generate booking code
+$movie_clean = preg_replace('/[^A-Za-z0-9]/', '', $movie);
+$movie_code = strtoupper(substr($movie_clean, 0, 3));
+if (strlen($movie_code) < 3) {
+    $movie_code = 'TIX';
+}
+$seed = $seats . $cinema . $time;
+$random_num = (abs(crc32($seed)) % 9000) + 1000;
+$booking_code = "TXL-2026-" . $movie_code . "-" . $random_num;
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -302,10 +332,13 @@
         <div class="ticket-wrapper">
             
             <div class="success-header">
-                <div class="success-circle">
+                <div class="success-circle" style="border-color: #20c997; box-shadow: 0 0 15px rgba(32, 201, 151, 0.2);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#20c997" class="bi bi-check-lg" viewBox="0 0 16 16">
+                        <path d="M12.736 1.4A1 1 0 0 1 13 2v7.184a1 1 0 0 1-.264.688L9.043 14H3.07l-3-3a1 1 0 0 1 0-1.414l1.414-1.414a1 1 0 0 1 1.414 0L5 10.243l6.322-6.322a1 1 0 0 1 1.414 0Z"/>
+                    </svg>
                 </div>
                 <h2 class="success-title">Pembayaran <span>Berhasil</span></h2>
-                <p class="success-subtitle">Transaksi dikonfirmasi - Senin, 4 Mei 2026 - 14:32 WIB</p>
+                <p class="success-subtitle">Transaksi dikonfirmasi - <?php echo date("d M Y, H:i"); ?> WIB</p>
             </div>
 
             <div class="box-panel border-success-box">
@@ -316,48 +349,48 @@
             <div class="box-panel border-ticket">
                 
                 <div class="movie-header">
-                    <h2 class="movie-title">Wonka</h2>
-                    <p class="movie-genre">Fantasy - Comedy - PG-13</p>
+                    <h2 class="movie-title"><?php echo htmlspecialchars($movie); ?></h2>
+                    <p class="movie-genre">Tixly Cinema Digital Pass</p>
                 </div>
 
                 <div class="ticket-details-grid">
                     <div>
                         <div class="ticket-label">TANGGAL</div>
-                        <div class="ticket-value">Senin, 4 Mei</div>
+                        <div class="ticket-value"><?php echo htmlspecialchars($date); ?></div>
                     </div>
                     <div>
                         <div class="ticket-label">JAM TAYANG</div>
-                        <div class="ticket-value">19:30 WIB</div>
+                        <div class="ticket-value"><?php echo htmlspecialchars($time); ?></div>
                     </div>
                     <div>
                         <div class="ticket-label">DURASI</div>
-                        <div class="ticket-value">116 menit</div>
+                        <div class="ticket-value"><?php echo htmlspecialchars($duration); ?></div>
                     </div>
                     <div>
                         <div class="ticket-label">BIOSKOP</div>
-                        <div class="ticket-value">CGV Paskal 23</div>
+                        <div class="ticket-value"><?php echo htmlspecialchars($cinema); ?></div>
                     </div>
                     <div>
                         <div class="ticket-label">STUDIO</div>
-                        <div class="ticket-value">Studio 4</div>
+                        <div class="ticket-value"><?php echo htmlspecialchars($type); ?></div>
                     </div>
                     <div>
                         <div class="ticket-label">KURSI</div>
-                        <div class="ticket-value ticket-value-highlight">D7, D8</div>
+                        <div class="ticket-value ticket-value-highlight"><?php echo htmlspecialchars($seats); ?></div>
                     </div>
                 </div>
 
                 <div class="dashed-line"></div>
 
                 <div class="qr-section">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=TXL-2026-WNK-7834&color=ffffff&bgcolor=150808" alt="QR Code" class="qr-img">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=<?php echo urlencode($booking_code); ?>&color=ffffff&bgcolor=150808" alt="QR Code" class="qr-img">
                     
                     <div>
                         <div class="ticket-label">KODE BOOKING</div>
-                        <div class="booking-code">TXL-2026-WNK-7834</div>
+                        <div class="booking-code"><?php echo htmlspecialchars($booking_code); ?></div>
                         <p class="qr-desc">
-                            Scan QR Code ini di pintu masuk<br>studio CGV Paskal 23.<br>
-                            Berlaku untuk <span>2 orang.</span>
+                            Scan QR Code ini di pintu masuk<br>studio <?php echo htmlspecialchars($cinema); ?>.<br>
+                            Berlaku untuk <span><?php echo $seat_count; ?> orang.</span>
                         </p>
                     </div>
                 </div>
@@ -368,8 +401,8 @@
                 <h6 class="summary-title">Ringkasan Pembayaran</h6>
                 
                 <div class="summary-row">
-                    <span>2x Tiket Regular</span>
-                    <span>Rp 120.000</span>
+                    <span><?php echo $seat_count; ?>x Tiket <?php echo htmlspecialchars($type); ?></span>
+                    <span>Rp <?php echo number_format($subtotal, 0, ',', '.'); ?></span>
                 </div>
                 <div class="summary-row">
                     <span>Biaya Layanan</span>
@@ -379,8 +412,8 @@
                 <div class="summary-total">
                     <span class="total-label">Total Dibayar</span>
                     <div class="total-value-wrapper">
-                        <span class="badge-method">OVO</span>
-                        <span class="total-amount">Rp 123.000</span>
+                        <span class="badge-method"><?php echo htmlspecialchars($method); ?></span>
+                        <span class="total-amount">Rp <?php echo number_format($total, 0, ',', '.'); ?></span>
                     </div>
                 </div>
             </div>

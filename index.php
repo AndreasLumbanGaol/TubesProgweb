@@ -167,6 +167,11 @@
             --bs-gutter-x: 24px;
             --bs-gutter-y: 24px;
         }
+        .movie-link {
+            text-decoration: none !important;
+            color: inherit;
+            display: block;
+        }
         .movie-card { 
             background: transparent; 
             border: none; 
@@ -289,58 +294,70 @@
 
         <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 movie-grid">
             <div class="col">
-                <div class="card movie-card">
-                    <div class="poster-wrapper">
-                        <img src="https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg" class="movie-poster" alt="Avatar">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="AVATAR: The Way of Water" data-poster="https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg" data-duration="3h 12m">
+                    <div class="card movie-card">
+                        <div class="poster-wrapper">
+                            <img src="https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg" class="movie-poster" alt="Avatar">
+                        </div>
+                        <p class="movie-title">AVATAR: The Way of Water</p>
+                        <p class="movie-duration">3h 12m</p>
                     </div>
-                    <p class="movie-title">AVATAR: The Way of Water</p>
-                    <p class="movie-duration">3h 12m</p>
-                </div>
+                </a>
             </div>
             <div class="col">
-                <div class="card movie-card">
-                    <div class="poster-wrapper">
-                        <img src="https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" class="movie-poster" alt="Joker">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="JOKER: Put On A Happy Face" data-poster="https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" data-duration="60m">
+                    <div class="card movie-card">
+                        <div class="poster-wrapper">
+                            <img src="https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" class="movie-poster" alt="Joker">
+                        </div>
+                        <p class="movie-title">JOKER: Put On A Happy Face</p>
+                        <p class="movie-duration">60m</p>
                     </div>
-                    <p class="movie-title">JOKER: Put On A Happy Face</p>
-                    <p class="movie-duration">60m</p>
-                </div>
+                </a>
             </div>
             <div class="col">
-                <div class="card movie-card">
-                    <div class="poster-wrapper">
-                        <img src="https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg" class="movie-poster" alt="Wonka">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Wonka" data-poster="https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg" data-duration="1h 56m">
+                    <div class="card movie-card">
+                        <div class="poster-wrapper">
+                            <img src="https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg" class="movie-poster" alt="Wonka">
+                        </div>
+                        <p class="movie-title">Wonka</p>
+                        <p class="movie-duration">1h 56m</p>
                     </div>
-                    <p class="movie-title">Wonka</p>
-                    <p class="movie-duration">1h 56m</p>
-                </div>
+                </a>
             </div>
             <div class="col">
-                <div class="card movie-card">
-                    <div class="poster-wrapper">
-                        <img src="https://image.tmdb.org/t/p/w500/r7XifzvtezNt31ypvsmb6Oqxw49.jpg" class="movie-poster" alt="Guardians">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Guardians of The Galaxy" data-poster="https://image.tmdb.org/t/p/w500/r7XifzvtezNt31ypvsmb6Oqxw49.jpg" data-duration="2h 1m">
+                    <div class="card movie-card">
+                        <div class="poster-wrapper">
+                            <img src="https://image.tmdb.org/t/p/w500/r7XifzvtezNt31ypvsmb6Oqxw49.jpg" class="movie-poster" alt="Guardians">
+                        </div>
+                        <p class="movie-title">Guardians of The Galaxy</p>
+                        <p class="movie-duration">2h 1m</p>
                     </div>
-                    <p class="movie-title">Guardians of The Galaxy</p>
-                    <p class="movie-duration">2h 1m</p>
-                </div>
+                </a>
             </div>
             <div class="col">
-                <div class="card movie-card">
-                    <div class="poster-wrapper">
-                        <img src="https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" class="movie-poster" alt="Avengers">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Avengers" data-poster="https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" data-duration="3h 1m">
+                    <div class="card movie-card">
+                        <div class="poster-wrapper">
+                            <img src="https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" class="movie-poster" alt="Avengers">
+                        </div>
+                        <p class="movie-title">Avengers</p>
+                        <p class="movie-duration">3h 1m</p>
                     </div>
-                    <p class="movie-title">Avengers</p>
-                    <p class="movie-duration">3h 1m</p>
-                </div>
+                </a>
             </div>
             <div class="col">
-                <div class="card movie-card">
-                    <div class="poster-wrapper">
-                        <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg" class="movie-poster" alt="Ghost">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Ghost In The Cell" data-poster="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg" data-duration="1h 46m">
+                    <div class="card movie-card">
+                        <div class="poster-wrapper">
+                            <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg" class="movie-poster" alt="Ghost">
+                        </div>
+                        <p class="movie-title">Ghost In The Cell</p>
+                        <p class="movie-duration">1h 46m</p>
                     </div>
-                    <p class="movie-title">Ghost In The Cell</p>
-                    <p class="movie-duration">1h 46m</p>
-                </div>
+                </a>
             </div>
         </div>
 
@@ -395,6 +412,8 @@
         </div>
 
     </div>
+
+    <?php include 'booking_modal.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

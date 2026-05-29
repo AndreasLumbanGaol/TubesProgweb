@@ -212,7 +212,7 @@
 
         <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 movie-grid">
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="AVATAR: The Way of Water" data-poster="https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg" data-duration="3h 17m">
                     <div class="card movie-card">
                         <img src="https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg" class="movie-poster" alt="Avatar">
                         <p class="movie-title">AVATAR: The Way of Water</p>
@@ -221,7 +221,7 @@
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="JOKER: Put On A Happy Face" data-poster="https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" data-duration="60m">
                     <div class="card movie-card">
                         <img src="https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" class="movie-poster" alt="Joker">
                         <p class="movie-title">JOKER: Put On A Happy Face</p>
@@ -230,7 +230,7 @@
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Wonka" data-poster="https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg" data-duration="1h 56m">
                     <div class="card movie-card">
                         <img src="https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg" class="movie-poster" alt="Wonka">
                         <p class="movie-title">Wonka</p>
@@ -239,7 +239,7 @@
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Guardians of The Galaxy" data-poster="https://image.tmdb.org/t/p/w500/r7XifzvtezNt31ypvsmb6Oqxw49.jpg" data-duration="2h 1m">
                     <div class="card movie-card">
                         <img src="https://image.tmdb.org/t/p/w500/r7XifzvtezNt31ypvsmb6Oqxw49.jpg" class="movie-poster" alt="Guardians">
                         <p class="movie-title">Guardians of The Galaxy</p>
@@ -248,7 +248,7 @@
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Avengers" data-poster="https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" data-duration="3h 1m">
                     <div class="card movie-card">
                         <img src="https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" class="movie-poster" alt="Avengers">
                         <p class="movie-title">Avengers</p>
@@ -257,7 +257,7 @@
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Ghost In The Cell" data-poster="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg" data-duration="1h 46m">
                     <div class="card movie-card">
                         <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg" class="movie-poster" alt="Ghost">
                         <p class="movie-title">Ghost In The Cell</p>
@@ -265,9 +265,9 @@
                     </div>
                 </a>
             </div>
-
+ 
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Jumbo" data-poster="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_9cdf1156e0f7b0ee9a45f143ce11976e.jpg" data-duration="1h 42m">
                     <div class="card movie-card">
                         <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_9cdf1156e0f7b0ee9a45f143ce11976e.jpg" class="movie-poster" alt="Jumbo">
                         <p class="movie-title">Jumbo</p>
@@ -276,7 +276,7 @@
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Yang Lain Boleh Hilang, Asal Kau Jangan" data-poster="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_d4bc3b7b9035989df6277825cf5fefd5.jpg" data-duration="1h 53m">
                     <div class="card movie-card">
                         <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_d4bc3b7b9035989df6277825cf5fefd5.jpg" class="movie-poster" alt="Mungkin Kita Perlu Waktu">
                         <p class="movie-title">Yang Lain Boleh Hilang, Asal Kau Jangan</p>
@@ -285,7 +285,7 @@
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="2nd Miracle In Cell No 7" data-poster="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_38ea256af71e0767b204e1c300fc4f09.png" data-duration="2h 27m">
                     <div class="card movie-card">
                         <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_38ea256af71e0767b204e1c300fc4f09.png" class="movie-poster" alt="13 Bom di Jakarta">
                         <p class="movie-title">2nd Miracle In Cell No 7</p>
@@ -294,16 +294,16 @@
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="Sekawan Limo" data-poster="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_840a7c47b45221974b785876428c61f6.jpeg" data-duration="1h 52m">
                     <div class="card movie-card">
                         <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_840a7c47b45221974b785876428c61f6.jpeg" class="movie-poster" alt="Sekawan Limo">
-                        <p class="movie-title">2nd Miracle In Cell No 7</p>
+                        <p class="movie-title">Sekawan Limo</p>
                         <p class="movie-duration">1h 52m</p>
                     </div>
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="The Devil Wears Prada 2" data-poster="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5cd2d563ce3516fc292cb495c3d666e2.jpg" data-duration="1h 59m">
                     <div class="card movie-card">
                         <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5cd2d563ce3516fc292cb495c3d666e2.jpg" class="movie-poster" alt="Petaka Gunung Gede">
                         <p class="movie-title">The Devil Wears Prada 2</p>
@@ -312,7 +312,7 @@
                 </a>
             </div>
             <div class="col">
-                <a href="booking.php" class="movie-link">
+                <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" data-title="SALMOKJI: WHISPERING WATER" data-poster="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_3a0e2045bc02d6479c7fade242ce64ed.png" data-duration="1h 41m">
                     <div class="card movie-card">
                         <img src="https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_3a0e2045bc02d6479c7fade242ce64ed.png" class="movie-poster" alt="Pangku">
                         <p class="movie-title">SALMOKJI: WHISPERING WATER</p>
@@ -373,6 +373,8 @@
         </div>
 
     </div>
+
+    <?php include 'booking_modal.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
