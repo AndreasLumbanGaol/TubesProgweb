@@ -25,8 +25,10 @@ $theaters = [
     ['theater_id' => 'THT01', 'nama' => 'Tixly Central', 'lokasi' => 'Bandung'],
 ];
 
+// PERBAIKAN: Struktur atribut data disesuaikan dengan rancangan tabel ERD relasional
 $studios = [
-    ['studio_id' => 'THT01', 'theater' => 'Tixly Central', 'nama' => 'Bandung', 'type' => 'Reguler', 'capacity' => 100],
+    ['studio_id' => 'STD01', 'theater_id' => 'THT01', 'nama' => 'Studio 1', 'type' => 'Reguler', 'capacity' => 100],
+    ['studio_id' => 'STD02', 'theater_id' => 'THT01', 'nama' => 'Studio 2', 'type' => 'Gold Class', 'capacity' => 40],
 ];
 ?>
 <!DOCTYPE html>
@@ -47,7 +49,6 @@ $studios = [
             min-height: 100vh;
         }
 
-        /* Navbar */
         .navbar { 
             border-bottom: 1px solid #3a2626;
             padding: 16px 24px;
@@ -65,7 +66,6 @@ $studios = [
             font-weight: normal;
         }
 
-        /* Sidebar */
         .sidebar {
             background-color: #0d0606;
             min-height: calc(100vh - 73px);
@@ -92,7 +92,6 @@ $studios = [
             border: 1px solid rgba(212, 175, 55, 0.3);
         }
 
-        /* Main Content */
         .main-content {
             padding: 32px;
             background-color: #1a0a0a;
@@ -105,7 +104,6 @@ $studios = [
             margin-bottom: 24px;
         }
 
-        /* Stat Cards */
         .stat-card {
             background: linear-gradient(135deg, #1a0f0f 0%, #2d1a1a 100%);
             border: 1px solid #3a2626;
@@ -129,7 +127,6 @@ $studios = [
         .stat-card .stat-value.teal { color: #5bb9b0; }
         .stat-card .stat-value.white { color: #ffffff; }
 
-        /* Data Tables */
         .data-panel {
             background-color: #150808;
             border: 1px solid #3a2626;
@@ -187,25 +184,9 @@ $studios = [
             background-color: rgba(212, 175, 55, 0.05);
         }
 
-        /* Badges */
-        .badge-true {
-            background-color: #28a745;
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-        }
-        .badge-false {
-            background-color: #dc3545;
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-        }
+        .badge-true { background-color: #28a745; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+        .badge-false { background-color: #dc3545; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 500; }
 
-        /* Action Buttons */
         .btn-edit {
             background-color: #d4af37;
             color: #000;
@@ -217,47 +198,26 @@ $studios = [
             text-decoration: none;
             transition: all 0.3s;
         }
-        .btn-edit:hover {
-            background-color: #b8962e;
-            color: #000;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1a0a0a; }
-        ::-webkit-scrollbar-thumb { background: #3a2626; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4a3636; }
+        .btn-edit:hover { background-color: #b8962e; color: #000; }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
     <nav class="navbar navbar-dark">
         <a class="navbar-brand" href="index.php">Tixly<span>Cinema</span></a>
     </nav>
 
     <div class="container-fluid">
         <div class="row">
-            
-            <!-- Sidebar -->
             <div class="col-md-2 sidebar">
-                <a href="admin-index.php" class="sidebar-link <?php echo $page == 'dashboard' ? 'active' : ''; ?>">
-                    Dashboard
-                </a>
-                <a href="admin-cinema.php" class="sidebar-link <?php echo $page == 'cinema' ? 'active' : ''; ?>">
-                    Cinema
-                </a>
-                <a href="admin-transaction.php" class="sidebar-link <?php echo $page == 'transaction' ? 'active' : ''; ?>">
-                    Transaction
-                </a>
+                <a href="admin-index.php" class="sidebar-link active">Dashboard</a>
+                <a href="admin-cinema.php" class="sidebar-link">Cinema</a>
+                <a href="admin-transaction.php" class="sidebar-link">Transaction</a>
             </div>
 
-            <!-- Main Content -->
             <div class="col-md-10 main-content">
-                
                 <h2 class="welcome-text">Selamat Datang Admin</h2>
 
-                <!-- Stat Cards -->
                 <div class="row mb-4">
                     <div class="col-md-4 mb-3">
                         <div class="stat-card">
@@ -279,7 +239,6 @@ $studios = [
                     </div>
                 </div>
 
-                <!-- Film Sedang Tayang -->
                 <div class="data-panel">
                     <div class="panel-header">
                         <h5 class="panel-title">Film Sedang Tayang</h5>
@@ -289,13 +248,7 @@ $studios = [
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Judul</th>
-                                    <th>Genre</th>
-                                    <th>Rating</th>
-                                    <th>Tiket Terjual</th>
-                                    <th>Pendapatan</th>
-                                    <th>Preorder</th>
-                                    <th>Aksi</th>
+                                    <th>Judul</th><th>Genre</th><th>Rating</th><th>Tiket Terjual</th><th>Pendapatan</th><th>Preorder</th><th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -306,11 +259,7 @@ $studios = [
                                     <td><?php echo $film['rating']; ?></td>
                                     <td><?php echo $film['tiket']; ?></td>
                                     <td><?php echo $film['pendapatan']; ?></td>
-                                    <td>
-                                        <span class="<?php echo $film['preorder'] ? 'badge-true' : 'badge-false'; ?>">
-                                            <?php echo $film['preorder'] ? 'true' : 'false'; ?>
-                                        </span>
-                                    </td>
+                                    <td><span class="<?php echo $film['preorder'] ? 'badge-true' : 'badge-false'; ?>"><?php echo $film['preorder'] ? 'true' : 'false'; ?></span></td>
                                     <td><a href="#" class="btn-edit">Edit</a></td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -319,7 +268,6 @@ $studios = [
                     </div>
                 </div>
 
-                <!-- Jadwal Tayang -->
                 <div class="data-panel">
                     <div class="panel-header">
                         <h5 class="panel-title">Jadwal Tayang</h5>
@@ -329,13 +277,7 @@ $studios = [
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>ShowtimeID</th>
-                                    <th>MovieID</th>
-                                    <th>StudioID</th>
-                                    <th>Harga</th>
-                                    <th>Tanggal Mulai</th>
-                                    <th>Waktu Mulai</th>
-                                    <th>Aksi</th>
+                                    <th>ShowtimeID</th><th>MovieID</th><th>StudioID</th><th>Harga</th><th>Tanggal Mulai</th><th>Waktu Mulai</th><th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -344,7 +286,7 @@ $studios = [
                                     <td><?php echo htmlspecialchars($jadwal['showtime_id']); ?></td>
                                     <td><?php echo htmlspecialchars($jadwal['movie_id']); ?></td>
                                     <td><?php echo htmlspecialchars($jadwal['studio_id']); ?></td>
-                                    <td><?php echo $jadwal['harga']; ?></td>
+                                    <td><?php echo number_format($jadwal['harga'], 0, ',', '.'); ?></td>
                                     <td><?php echo $jadwal['tanggal']; ?></td>
                                     <td><?php echo $jadwal['waktu']; ?></td>
                                     <td><a href="#" class="btn-edit">Edit</a></td>
@@ -355,7 +297,6 @@ $studios = [
                     </div>
                 </div>
 
-                <!-- Theater -->
                 <div class="data-panel">
                     <div class="panel-header">
                         <h5 class="panel-title">Theater</h5>
@@ -365,10 +306,7 @@ $studios = [
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>TheaterID</th>
-                                    <th>Nama</th>
-                                    <th>Lokasi</th>
-                                    <th>Aksi</th>
+                                    <th>TheaterID</th><th>Nama</th><th>Lokasi</th><th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -385,7 +323,6 @@ $studios = [
                     </div>
                 </div>
 
-                <!-- Studio -->
                 <div class="data-panel">
                     <div class="panel-header">
                         <h5 class="panel-title">Studio</h5>
@@ -395,21 +332,17 @@ $studios = [
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>StudioID</th>
-                                    <th>TheaterID</th>
-                                    <th>Nama</th>
-                                    <th>Type</th>
-                                    <th>Capacity</th>
+                                    <th>StudioID</th><th>TheaterID</th><th>Nama Studio</th><th>Tipe</th><th>Kapasitas</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($studios as $studio): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($studio['studio_id']); ?></td>
-                                    <td><?php echo htmlspecialchars($studio['theater']); ?></td>
+                                    <td><?php echo htmlspecialchars($studio['theater_id']); ?></td>
                                     <td><?php echo htmlspecialchars($studio['nama']); ?></td>
                                     <td><?php echo htmlspecialchars($studio['type']); ?></td>
-                                    <td><?php echo $studio['capacity']; ?></td>
+                                    <td><?php echo $studio['capacity']; ?> Kursi</td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
