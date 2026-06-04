@@ -1,12 +1,63 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+include 'koneksi.php';
+
 $movie = isset($_GET['movie']) ? $_GET['movie'] : 'Wonka';
 $poster = isset($_GET['poster']) ? $_GET['poster'] : 'https://image.tmdb.org/t/p/w200/qhb1qOilapbapxWQn9jtRCMwXJF.jpg';
 $duration = isset($_GET['duration']) ? $_GET['duration'] : '1h 56m';
 $cinema = isset($_GET['cinema']) ? $_GET['cinema'] : 'CGV Paskal 23';
 $type = isset($_GET['type']) ? $_GET['type'] : 'Regular';
 $price = isset($_GET['price']) ? intval($_GET['price']) : 50000;
-$date = isset($_GET['date']) ? $_GET['date'] : 'Hari Ini';
+$date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
 $time = isset($_GET['time']) ? $_GET['time'] : '19:30';
+
+// Format tanggal untuk tampilan agar user-friendly
+$date_display = date('d M Y', strtotime($date));
+$hari = date('Y-m-d', strtotime($date));
+if ($hari == date('Y-m-d')) {
+    $date_display = "Hari Ini (" . date('d M', strtotime($date)) . ")";
+} elseif ($hari == date('Y-m-d', strtotime('+1 day'))) {
+    $date_display = "Besok (" . date('d M', strtotime($date)) . ")";
+}
+
+// Cari ShowtimeID berdasarkan parameter pencarian
+$showtime_id = 0;
+$movie_escaped = mysqli_real_escape_string($conn, $movie);
+$cinema_escaped = mysqli_real_escape_string($conn, $cinema);
+$type_escaped = mysqli_real_escape_string($conn, $type);
+$date_escaped = mysqli_real_escape_string($conn, $date);
+$time_escaped = mysqli_real_escape_string($conn, $time);
+
+$query_showtime = "SELECT st.ShowtimeID 
+                   FROM showtime st
+                   JOIN movie m ON st.MovieID = m.MovieID
+                   JOIN studio s ON st.StudioID = s.StudioID
+                   JOIN theater t ON s.TheaterID = t.TheaterID
+                   WHERE m.Title = '$movie_escaped' 
+                     AND t.Name = '$cinema_escaped' 
+                     AND s.Type = '$type_escaped'
+                     AND st.PlayDate = '$date_escaped' 
+                     AND st.StartTime LIKE '$time_escaped%'
+                   LIMIT 1";
+$res_showtime = mysqli_query($conn, $query_showtime);
+if ($res_showtime && mysqli_num_rows($res_showtime) > 0) {
+    $row_showtime = mysqli_fetch_assoc($res_showtime);
+    $showtime_id = $row_showtime['ShowtimeID'];
+}
+
+// Ambil daftar kursi yang sudah dipesan untuk jadwal ini
+$occupied_seats = [];
+if ($showtime_id > 0) {
+    $query_seats = "SELECT SeatInfo FROM ticket WHERE ShowtimeID = $showtime_id AND Status = 'aktif'";
+    $res_seats = mysqli_query($conn, $query_seats);
+    if ($res_seats) {
+        while ($row_seat = mysqli_fetch_assoc($res_seats)) {
+            $occupied_seats[] = trim($row_seat['SeatInfo']);
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -285,14 +336,24 @@ $time = isset($_GET['time']) ? $_GET['time'] : '19:30';
                     <li class="nav-item"><a class="nav-link active" href="#">Resell Ticket</a></li>
                 </ul>
                 <div class="user-actions">
-                    <a href="login.php" class="login-button">
-                        LOG IN / SIGN UP
-                    </a>
-                    <a href="#">
-                        <img src="https://static.vecteezy.com/system/resources/thumbnails/007/033/146/small/profile-icon-login-head-icon-vector.jpg" 
-                             alt="Profile" 
-                             class="profile-icon">
-                    </a>
+                    <?php 
+                    $isLoggedIn = isset($_SESSION['UserID']) || isset($_SESSION['user_id']);
+                    if ($isLoggedIn): 
+                        $namaUser = isset($_SESSION['Nama']) ? $_SESSION['Nama'] : (isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'User');
+                    ?>
+                        <a href="profile.php" style="color: #d4af37; text-decoration: none; margin-right: 15px; font-weight: bold; font-family: monospace; font-size: 15px;">
+                            Hi, <?php echo htmlspecialchars($namaUser); ?>!
+                        </a>
+                        <a href="profile.php">
+                            <img src="https://static.vecteezy.com/system/resources/thumbnails/007/033/146/small/profile-icon-login-head-icon-vector.jpg" alt="Profile" class="profile-icon">
+                        </a>
+                        <a href="logout.php" class="btn btn-outline-danger btn-sm ms-3" style="border-radius: 20px; font-weight: bold; padding: 5px 15px;">Logout</a>
+                    <?php else: ?>
+                        <a href="login.php" class="login-button">LOG IN / SIGN UP</a>
+                        <a href="login.php">
+                            <img src="https://static.vecteezy.com/system/resources/thumbnails/007/033/146/small/profile-icon-login-head-icon-vector.jpg" alt="Profile" class="profile-icon" style="opacity: 0.4;">
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -311,50 +372,35 @@ $time = isset($_GET['time']) ? $_GET['time'] : '19:30';
                     </div>
 
                     <div class="seating-area">
-                        
-                        <div class="seat-row"><div class="seat-label">A</div>
-                            <div class="seat-group">
-                                <div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div>
-                            </div><div class="seat-gap"></div>
-                            <div class="seat-group">
-                                <div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div>
+                        <?php
+                        $rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                        foreach ($rows as $rowLetter) {
+                            ?>
+                            <div class="seat-row">
+                                <div class="seat-label"><?php echo $rowLetter; ?></div>
+                                <div class="seat-group">
+                                    <?php
+                                    for ($i = 1; $i <= 6; $i++) {
+                                        $seatName = $rowLetter . $i;
+                                        $occupiedClass = in_array($seatName, $occupied_seats) ? 'occupied' : '';
+                                        echo "<div class='seat $occupiedClass' data-seat-name='$seatName'></div>";
+                                    }
+                                    ?>
+                                </div>
+                                <div class="seat-gap"></div>
+                                <div class="seat-group">
+                                    <?php
+                                    for ($i = 7; $i <= 12; $i++) {
+                                        $seatName = $rowLetter . $i;
+                                        $occupiedClass = in_array($seatName, $occupied_seats) ? 'occupied' : '';
+                                        echo "<div class='seat $occupiedClass' data-seat-name='$seatName'></div>";
+                                    }
+                                    ?>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="seat-row"><div class="seat-label">B</div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div><div class="seat-gap"></div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div>
-                        </div>
-
-                        <div class="seat-row"><div class="seat-label">C</div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat occupied"></div><div class="seat occupied"></div><div class="seat occupied"></div><div class="seat occupied"></div><div class="seat"></div></div><div class="seat-gap"></div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div>
-                        </div>
-
-                        <div class="seat-row"><div class="seat-label">D</div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div><div class="seat-gap"></div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div>
-                        </div>
-
-                        <div class="seat-row"><div class="seat-label">E</div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div><div class="seat-gap"></div>
-                            <div class="seat-group"><div class="seat occupied"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div>
-                        </div>
-
-                        <div class="seat-row"><div class="seat-label">F</div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat occupied"></div><div class="seat"></div><div class="seat occupied"></div></div><div class="seat-gap"></div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div>
-                        </div>
-
-                        <div class="seat-row"><div class="seat-label">G</div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat occupied"></div><div class="seat"></div></div><div class="seat-gap"></div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div>
-                        </div>
-
-                        <div class="seat-row"><div class="seat-label">H</div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div><div class="seat-gap"></div>
-                            <div class="seat-group"><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat occupied"></div><div class="seat occupied"></div></div>
-                        </div>
+                            <?php
+                        }
+                        ?>
                     </div>
 
                     <div class="legend-container">
@@ -375,7 +421,7 @@ $time = isset($_GET['time']) ? $_GET['time'] : '19:30';
                         <img src="<?php echo htmlspecialchars($poster); ?>" class="movie-poster" alt="<?php echo htmlspecialchars($movie); ?>">
                         <div class="movie-details">
                             <h6><?php echo htmlspecialchars($movie); ?></h6>
-                            <p><?php echo htmlspecialchars($date); ?> - <?php echo htmlspecialchars($time); ?></p>
+                            <p><?php echo htmlspecialchars($date_display); ?> - <?php echo htmlspecialchars($time); ?></p>
                             <p><?php echo htmlspecialchars($cinema); ?> - <span id="summary-seats-label">Belum ada kursi</span></p>
                         </div>
                     </div>
