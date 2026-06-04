@@ -20,7 +20,8 @@ SET time_zone = "+00:00";
 --
 -- Database: `tixly_cinema`
 --
-
+CREATE DATABASE IF NOT EXISTS `tixly_cinema`;
+USE `tixly_cinema`;
 -- --------------------------------------------------------
 
 --

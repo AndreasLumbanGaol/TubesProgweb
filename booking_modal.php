@@ -343,6 +343,52 @@
 <script>
     // Inisialisasi event modal setelah dokumen dimuat
     document.addEventListener("DOMContentLoaded", function() {
+        // Pemetaan harga tiket dinamis per bioskop
+        const cinemaPrices = {
+            "XXI Cinema": {
+                "Regular": { price: 50000, label: "Rp 50.000" },
+                "Velvet": { price: 120000, label: "Rp 120.000" },
+                "Gold Class": { price: 150000, label: "Rp 150.000" }
+            },
+            "CGV Cinemas": {
+                "Regular": { price: 35000, label: "Rp 35.000" },
+                "Velvet": { price: 90000, label: "Rp 90.000" },
+                "Gold Class": { price: 110000, label: "Rp 110.000" }
+            },
+            "Cinemapolis": {
+                "Regular": { price: 40000, label: "Rp 40.000" },
+                "Velvet": { price: 100000, label: "Rp 100.000" },
+                "Gold Class": { price: 130000, label: "Rp 130.000" }
+            }
+        };
+
+        // Fungsi memperbarui harga tipe studio berdasarkan bioskop terpilih
+        function updateStudioPrices() {
+            const selectedCinema = document.querySelector('input[name="cinema"]:checked').value;
+            const prices = cinemaPrices[selectedCinema];
+            if (prices) {
+                // Regular
+                const regInput = document.getElementById('type-regular');
+                regInput.setAttribute('data-price', prices.Regular.price);
+                regInput.nextElementSibling.querySelector('.studio-type-price').textContent = prices.Regular.label;
+
+                // Velvet Class
+                const velInput = document.getElementById('type-velvet');
+                velInput.setAttribute('data-price', prices.Velvet.price);
+                velInput.nextElementSibling.querySelector('.studio-type-price').textContent = prices.Velvet.label;
+
+                // Gold Class
+                const goldInput = document.getElementById('type-gold');
+                goldInput.setAttribute('data-price', prices["Gold Class"].price);
+                goldInput.nextElementSibling.querySelector('.studio-type-price').textContent = prices["Gold Class"].label;
+            }
+        }
+
+        // Daftarkan listener perubahan bioskop
+        document.querySelectorAll('input[name="cinema"]').forEach(radio => {
+            radio.addEventListener('change', updateStudioPrices);
+        });
+
         // Logika pengisian modal secara dinamis
         const bookingModal = document.getElementById('bookingModal');
         if (bookingModal) {
@@ -366,6 +412,9 @@
                 modalPoster.src = moviePoster;
                 modalHiddenPoster.value = moviePoster;
                 modalDuration.textContent = movieDuration || 'N/A';
+
+                // Jalankan fungsi update harga agar akurat saat modal tampil
+                updateStudioPrices();
             });
         }
 

@@ -199,16 +199,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav nav-center-menu">
-                    <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="films.php">Films</a></li>
-                    <li class="nav-item"><a class="nav-link" href="resell.php">Resell Ticket</a></li>
-                </ul>
+            
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                
                 <div class="user-actions">
                     <a href="login.php" class="login-button">LOG IN / SIGN UP</a>
                     <a href="#"><img src="https://static.vecteezy.com/system/resources/thumbnails/007/033/146/small/profile-icon-login-head-icon-vector.jpg" alt="Profile Icon" class="profile-icon"></a>
                 </div>
+                
             </div>
         </div>
     </nav>
