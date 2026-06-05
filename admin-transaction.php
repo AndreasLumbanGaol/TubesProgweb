@@ -1,27 +1,153 @@
 <?php
+session_start();
+include 'koneksi.php';
 $page = 'transaction';
 
+// Fetch stats dynamically from database
 $stats = [
-    'total_transaksi' => 12847,
-    'sukses' => 11234,
-    'pending' => 892,
-    'refund' => 721,
-    'pendapatan' => 1.2
+    'total_transaksi' => 0,
+    'sukses' => 0,
+    'pending' => 0,
+    'refund' => 0,
+    'pendapatan' => 0
 ];
 
-$transactions = [
-    ['id' => 'TRX001', 'user' => 'John Doe', 'film' => 'Avatar: The Way of Water', 'qty' => 2, 'total' => 'Rp 130.000', 'date' => '2026-05-28', 'status' => 'sukses'],
-    ['id' => 'TRX002', 'user' => 'Jane Smith', 'film' => 'Wonka', 'qty' => 4, 'total' => 'Rp 200.000', 'date' => '2026-05-28', 'status' => 'pending'],
-    ['id' => 'TRX003', 'user' => 'Bob Wilson', 'film' => 'Dune: Part Two', 'qty' => 1, 'total' => 'Rp 85.000', 'date' => '2026-05-27', 'status' => 'sukses'],
-    ['id' => 'TRX004', 'user' => 'Alice Brown', 'film' => 'Oppenheimer', 'qty' => 3, 'total' => 'Rp 255.000', 'date' => '2026-05-27', 'status' => 'refund'],
-    ['id' => 'TRX005', 'user' => 'Charlie Lee', 'film' => 'Avatar: The Way of Water', 'qty' => 2, 'total' => 'Rp 130.000', 'date' => '2026-05-26', 'status' => 'sukses'],
-];
+// Total Transaksi
+$q_total = mysqli_query($conn, "SELECT COUNT(*) AS total FROM `transaction`");
+if ($q_total) {
+    $stats['total_transaksi'] = mysqli_fetch_assoc($q_total)['total'];
+}
 
-$resells = [
-    ['id' => 'RSL001', 'seller' => 'John Doe', 'film' => 'Avatar: The Way of Water', 'seat' => 'A5, A6', 'price' => 'Rp 120.000', 'date' => '2026-05-30', 'status' => 'aktif'],
-    ['id' => 'RSL002', 'seller' => 'Jane Smith', 'film' => 'Wonka', 'seat' => 'C3', 'price' => 'Rp 55.000', 'date' => '2026-05-29', 'status' => 'terjual'],
-    ['id' => 'RSL003', 'seller' => 'Bob Wilson', 'film' => 'Dune: Part Two', 'seat' => 'D7, D8, D9', 'price' => 'Rp 240.000', 'date' => '2026-05-31', 'status' => 'aktif'],
-];
+// Sukses
+$q_sukses = mysqli_query($conn, "SELECT COUNT(*) AS total FROM `transaction` WHERE PaymentStatus = 'sukses'");
+if ($q_sukses) {
+    $stats['sukses'] = mysqli_fetch_assoc($q_sukses)['total'];
+}
+
+// Pending
+$q_pending = mysqli_query($conn, "SELECT COUNT(*) AS total FROM `transaction` WHERE PaymentStatus = 'pending'");
+if ($q_pending) {
+    $stats['pending'] = mysqli_fetch_assoc($q_pending)['total'];
+}
+
+// Refund
+$q_refund = mysqli_query($conn, "SELECT COUNT(*) AS total FROM `transaction` WHERE PaymentStatus = 'refund'");
+if ($q_refund) {
+    $stats['refund'] = mysqli_fetch_assoc($q_refund)['total'];
+}
+
+// Total Pendapatan
+$q_rev = mysqli_query($conn, "SELECT SUM(TotalPrice) AS total FROM `transaction` WHERE PaymentStatus = 'sukses'");
+if ($q_rev) {
+    $stats['pendapatan'] = mysqli_fetch_assoc($q_rev)['total'] ?? 0;
+}
+
+// ----------------------------------------------------
+// Normal Transaction list query with filters
+// ----------------------------------------------------
+$search_trx = isset($_GET['search_trx']) ? mysqli_real_escape_string($conn, $_GET['search_trx']) : '';
+$status_trx = isset($_GET['status_trx']) ? mysqli_real_escape_string($conn, $_GET['status_trx']) : '';
+
+$where_trx = " WHERE 1=1 ";
+if ($search_trx !== '') {
+    $where_trx .= " AND (u.Nama LIKE '%$search_trx%' OR m.Title LIKE '%$search_trx%' OR t.TransactionID LIKE '%$search_trx%') ";
+}
+if ($status_trx !== '') {
+    $where_trx .= " AND t.PaymentStatus = '$status_trx' ";
+}
+
+$query_trx = "SELECT 
+    t.TransactionID, 
+    u.Nama AS UserNama, 
+    m.Title AS MovieTitle, 
+    COUNT(tk.TicketID) AS Qty, 
+    t.TotalPrice, 
+    t.TransDate, 
+    t.PaymentStatus,
+    GROUP_CONCAT(DISTINCT th.Name SEPARATOR ', ') AS TheaterName,
+    GROUP_CONCAT(tk.SeatInfo SEPARATOR ', ') AS Seats
+FROM `transaction` t
+LEFT JOIN `user` u ON t.UserID = u.UserID
+LEFT JOIN ticket tk ON t.TransactionID = tk.TransactionID
+LEFT JOIN showtime s ON tk.ShowtimeID = s.ShowtimeID
+LEFT JOIN movie m ON s.MovieID = m.MovieID
+LEFT JOIN studio st ON tk.StudioID = st.StudioID
+LEFT JOIN theater th ON st.TheaterID = th.TheaterID
+$where_trx
+GROUP BY t.TransactionID
+ORDER BY t.TransactionID DESC";
+
+$res_trx = mysqli_query($conn, $query_trx);
+$transactions = [];
+if ($res_trx) {
+    while ($row = mysqli_fetch_assoc($res_trx)) {
+        $transactions[] = [
+            'id' => 'TRX' . str_pad($row['TransactionID'], 3, '0', STR_PAD_LEFT),
+            'user' => $row['UserNama'] ? $row['UserNama'] : 'Guest',
+            'film' => $row['MovieTitle'] ? $row['MovieTitle'] : 'Tiket Resell / Dummy Film',
+            'qty' => $row['Qty'],
+            'total' => 'Rp ' . number_format($row['TotalPrice'], 0, ',', '.'),
+            'date' => date('Y-m-d', strtotime($row['TransDate'])),
+            'status' => $row['PaymentStatus'],
+            'theater' => $row['TheaterName'],
+            'seats' => $row['Seats']
+        ];
+    }
+}
+
+// ----------------------------------------------------
+// Resell Transaction list query with filters
+// ----------------------------------------------------
+$search_rsl = isset($_GET['search_rsl']) ? mysqli_real_escape_string($conn, $_GET['search_rsl']) : '';
+$status_rsl = isset($_GET['status_rsl']) ? mysqli_real_escape_string($conn, $_GET['status_rsl']) : '';
+
+$where_rsl = " WHERE t.IsResale = 1 ";
+if ($search_rsl !== '') {
+    $where_rsl .= " AND (u.Nama LIKE '%$search_rsl%' OR m.Title LIKE '%$search_rsl%' OR t.TicketID LIKE '%$search_rsl%') ";
+}
+if ($status_rsl !== '') {
+    if ($status_rsl === 'aktif') {
+        $where_rsl .= " AND t.Status = 'aktif' ";
+    } else {
+        $where_rsl .= " AND t.Status = 'terjual' "; // fallback
+    }
+}
+
+$query_rsl = "SELECT 
+    t.TicketID, 
+    u.Nama AS SellerNama, 
+    m.Title AS MovieTitle, 
+    t.SeatInfo, 
+    t.SecondPrice, 
+    s.PlayDate, 
+    t.Status,
+    th.Name AS TheaterName
+FROM ticket t
+LEFT JOIN transaction tr ON t.TransactionID = tr.TransactionID
+LEFT JOIN user u ON tr.UserID = u.UserID
+LEFT JOIN showtime s ON t.ShowtimeID = s.ShowtimeID
+LEFT JOIN movie m ON s.MovieID = m.MovieID
+LEFT JOIN studio st ON t.StudioID = st.StudioID
+LEFT JOIN theater th ON st.TheaterID = th.TheaterID
+$where_rsl
+ORDER BY t.TicketID DESC";
+
+$res_rsl = mysqli_query($conn, $query_rsl);
+$resells = [];
+if ($res_rsl) {
+    while ($row = mysqli_fetch_assoc($res_rsl)) {
+        $resells[] = [
+            'id' => 'RSL' . str_pad($row['TicketID'], 3, '0', STR_PAD_LEFT),
+            'seller' => $row['SellerNama'] ? $row['SellerNama'] : 'Unknown',
+            'film' => $row['MovieTitle'] ? $row['MovieTitle'] : 'Unknown Film',
+            'seat' => $row['SeatInfo'],
+            'price' => 'Rp ' . number_format($row['SecondPrice'], 0, ',', '.'),
+            'date' => date('Y-m-d', strtotime($row['PlayDate'])),
+            'status' => $row['Status'],
+            'theater' => $row['TheaterName']
+        ];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -132,14 +258,14 @@ $resells = [
             </div>
 
             <div class="col-md-10 main-content">
-                <h2 class="welcome-text">Selamat Datang Admin</h2>
+                <h2 class="welcome-text">Kelola Transaksi</h2>
 
                 <div class="row mb-4">
                     <div class="col mb-3"><div class="stat-card"><h6>Total Transaksi</h6><p class="stat-value gold"><?php echo number_format($stats['total_transaksi'], 0, ',', '.'); ?></p></div></div>
                     <div class="col mb-3"><div class="stat-card"><h6>Sukses</h6><p class="stat-value green"><?php echo number_format($stats['sukses'], 0, ',', '.'); ?></p></div></div>
                     <div class="col mb-3"><div class="stat-card"><h6>Pending</h6><p class="stat-value yellow"><?php echo number_format($stats['pending'], 0, ',', '.'); ?></p></div></div>
                     <div class="col mb-3"><div class="stat-card"><h6>Refund</h6><p class="stat-value red"><?php echo number_format($stats['refund'], 0, ',', '.'); ?></p></div></div>
-                    <div class="col mb-3"><div class="stat-card"><h6>Pendapatan</h6><p class="stat-value teal"><?php echo $stats['pendapatan']; ?> M</p></div></div>
+                    <div class="col mb-3"><div class="stat-card"><h6>Pendapatan</h6><p class="stat-value teal">Rp <?php echo number_format($stats['pendapatan'], 0, ',', '.'); ?></p></div></div>
                 </div>
 
                 <div class="data-panel">
@@ -166,7 +292,7 @@ $resells = [
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($transactions as $trx): ?>
+                                <?php if (!empty($transactions)): foreach ($transactions as $trx): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($trx['id']); ?></td>
                                     <td><?php echo htmlspecialchars($trx['user']); ?></td>
@@ -183,9 +309,24 @@ $resells = [
                                         ?>
                                         <span class="<?php echo $badgeClass; ?>"><?php echo ucfirst($trx['status']); ?></span>
                                     </td>
-                                    <td><button class="btn-detail" data-bs-toggle="modal" data-bs-target="#detailModal">Detail</button></td>
+                                    <td>
+                                        <button class="btn-detail btn-trx-detail" 
+                                                data-id="<?php echo htmlspecialchars($trx['id']); ?>"
+                                                data-user="<?php echo htmlspecialchars($trx['user']); ?>"
+                                                data-film="<?php echo htmlspecialchars($trx['film']); ?>"
+                                                data-theater="<?php echo htmlspecialchars($trx['theater']); ?>"
+                                                data-seats="<?php echo htmlspecialchars($trx['seats']); ?>"
+                                                data-total="<?php echo htmlspecialchars($trx['total']); ?>"
+                                                data-status="<?php echo htmlspecialchars(ucfirst($trx['status'])); ?>"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#detailModal">
+                                            Detail
+                                        </button>
+                                    </td>
                                 </tr>
-                                <?php endforeach; ?>
+                                <?php endforeach; else: ?>
+                                <tr><td colspan="8" class="text-center text-muted py-4">Belum ada transaksi tiket.</td></tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -212,7 +353,7 @@ $resells = [
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($resells as $resell): ?>
+                                <?php if (!empty($resells)): foreach ($resells as $resell): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($resell['id']); ?></td>
                                     <td><?php echo htmlspecialchars($resell['seller']); ?></td>
@@ -227,9 +368,24 @@ $resells = [
                                         ?>
                                         <span class="<?php echo $badgeClass; ?>"><?php echo ucfirst($resell['status']); ?></span>
                                     </td>
-                                    <td><button class="btn-detail" data-bs-toggle="modal" data-bs-target="#detailModal">Detail</button></td>
+                                    <td>
+                                        <button class="btn-detail btn-rsl-detail" 
+                                                data-id="<?php echo htmlspecialchars($resell['id']); ?>"
+                                                data-seller="<?php echo htmlspecialchars($resell['seller']); ?>"
+                                                data-film="<?php echo htmlspecialchars($resell['film']); ?>"
+                                                data-theater="<?php echo htmlspecialchars($resell['theater']); ?>"
+                                                data-seat="<?php echo htmlspecialchars($resell['seat']); ?>"
+                                                data-price="<?php echo htmlspecialchars($resell['price']); ?>"
+                                                data-status="<?php echo htmlspecialchars(ucfirst($resell['status'])); ?>"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#detailModal">
+                                            Detail
+                                        </button>
+                                    </td>
                                 </tr>
-                                <?php endforeach; ?>
+                                <?php endforeach; else: ?>
+                                <tr><td colspan="8" class="text-center text-muted py-4">Belum ada resell tiket aktif.</td></tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -239,6 +395,7 @@ $resells = [
         </div>
     </div>
 
+    <!-- Dynamic Detail Modal -->
     <div class="modal fade" id="detailModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -246,19 +403,99 @@ $resells = [
                     <h5 class="modal-title">Detail Transaksi</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="detail-row"><span class="detail-label">ID Transaksi</span><span class="detail-value">TRX001</span></div>
-                    <div class="detail-row"><span class="detail-label">Nama User</span><span class="detail-value">John Doe</span></div>
-                    <div class="detail-row"><span class="detail-label">Film</span><span class="detail-value">Avatar: The Way of Water</span></div>
-                    <div class="detail-row"><span class="detail-label">Bioskop</span><span class="detail-value">CGV Paskal 23</span></div>
-                    <div class="detail-row"><span class="detail-label">Kursi</span><span class="detail-value">A5, A6</span></div>
-                    <div class="detail-row"><span class="detail-label">Total Pembayaran</span><span class="detail-value" style="color: #d4af37;">Rp 130.000</span></div>
-                    <div class="detail-row"><span class="detail-label">Status</span><span class="badge-success">Sukses</span></div>
+                <div class="modal-body text-white">
+                    <div class="detail-row"><span class="detail-label" id="det-label-id">ID Transaksi</span><span class="detail-value" id="det-id">-</span></div>
+                    <div class="detail-row"><span class="detail-label" id="det-label-user">Nama User</span><span class="detail-value" id="det-user">-</span></div>
+                    <div class="detail-row"><span class="detail-label">Film</span><span class="detail-value" id="det-film">-</span></div>
+                    <div class="detail-row"><span class="detail-label">Bioskop</span><span class="detail-value" id="det-theater">-</span></div>
+                    <div class="detail-row"><span class="detail-label" id="det-label-seats">Kursi</span><span class="detail-value" id="det-seats">-</span></div>
+                    <div class="detail-row"><span class="detail-label" id="det-label-total">Total Pembayaran</span><span class="detail-value" id="det-total" style="color: #d4af37;">-</span></div>
+                    <div class="detail-row"><span class="detail-label">Status</span><span id="det-status" class="badge bg-success">Sukses</span></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const detailModal = document.getElementById('detailModal');
+        detailModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            if (button.classList.contains('btn-trx-detail')) {
+                const id = button.getAttribute('data-id');
+                const user = button.getAttribute('data-user');
+                const film = button.getAttribute('data-film');
+                const theater = button.getAttribute('data-theater');
+                const seats = button.getAttribute('data-seats');
+                const total = button.getAttribute('data-total');
+                const status = button.getAttribute('data-status');
+
+                detailModal.querySelector('.modal-title').textContent = 'Detail Transaksi ' + id;
+                detailModal.querySelector('#det-label-id').textContent = 'ID Transaksi';
+                detailModal.querySelector('#det-id').textContent = id;
+                
+                detailModal.querySelector('#det-label-user').textContent = 'Nama User';
+                detailModal.querySelector('#det-user').textContent = user;
+                
+                detailModal.querySelector('#det-film').textContent = film;
+                detailModal.querySelector('#det-theater').textContent = theater ? theater : '-';
+                
+                detailModal.querySelector('#det-label-seats').textContent = 'Kursi';
+                detailModal.querySelector('#det-seats').textContent = seats ? seats : '-';
+                
+                detailModal.querySelector('#det-label-total').textContent = 'Total Pembayaran';
+                detailModal.querySelector('#det-total').textContent = total;
+                
+                const statusEl = detailModal.querySelector('#det-status');
+                statusEl.textContent = status;
+                statusEl.className = ''; 
+                if (status.toLowerCase() === 'sukses') {
+                    statusEl.className = 'badge bg-success';
+                } else if (status.toLowerCase() === 'pending') {
+                    statusEl.className = 'badge bg-warning text-dark';
+                } else if (status.toLowerCase() === 'refund') {
+                    statusEl.className = 'badge bg-secondary';
+                } else {
+                    statusEl.className = 'badge bg-danger';
+                }
+            } else if (button.classList.contains('btn-rsl-detail')) {
+                const id = button.getAttribute('data-id');
+                const seller = button.getAttribute('data-seller');
+                const film = button.getAttribute('data-film');
+                const theater = button.getAttribute('data-theater');
+                const seat = button.getAttribute('data-seat');
+                const price = button.getAttribute('data-price');
+                const status = button.getAttribute('data-status');
+
+                detailModal.querySelector('.modal-title').textContent = 'Detail Resell ' + id;
+                
+                detailModal.querySelector('#det-label-id').textContent = 'ID Resell';
+                detailModal.querySelector('#det-id').textContent = id;
+                
+                detailModal.querySelector('#det-label-user').textContent = 'Penjual';
+                detailModal.querySelector('#det-user').textContent = seller;
+                
+                detailModal.querySelector('#det-film').textContent = film;
+                detailModal.querySelector('#det-theater').textContent = theater ? theater : '-';
+                
+                detailModal.querySelector('#det-label-seats').textContent = 'Kursi';
+                detailModal.querySelector('#det-seats').textContent = seat;
+                
+                detailModal.querySelector('#det-label-total').textContent = 'Harga Jual';
+                detailModal.querySelector('#det-total').textContent = price;
+                
+                const statusEl = detailModal.querySelector('#det-status');
+                statusEl.textContent = status;
+                statusEl.className = ''; 
+                if (status.toLowerCase() === 'aktif') {
+                    statusEl.className = 'badge bg-info text-dark';
+                } else if (status.toLowerCase() === 'terjual') {
+                    statusEl.className = 'badge bg-success';
+                } else {
+                    statusEl.className = 'badge bg-secondary';
+                }
+            }
+        });
+    </script>
 </body>
 </html>
