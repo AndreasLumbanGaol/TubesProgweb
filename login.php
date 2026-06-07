@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Logika Pengalihan Menu berdasarkan Role ERD
             if ($user['Role'] === 'admin') {
-                header("Location: admin-index.php");
+                header("Location: admin/index.php");
             } else {
                 header("Location: index.php");
             }

@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'koneksi.php';
+include '../koneksi.php';
 $page = 'transaction';
 
 // Fetch stats dynamically from database
@@ -252,9 +252,9 @@ if ($res_rsl) {
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-2 sidebar">
-                <a href="admin-index.php" class="sidebar-link">Dashboard</a>
-                <a href="admin-cinema.php" class="sidebar-link">Cinema</a>
-                <a href="admin-transaction.php" class="sidebar-link active">Transaction</a>
+                <a href="index.php" class="sidebar-link">Dashboard</a>
+                <a href="cinema.php" class="sidebar-link">Cinema</a>
+                <a href="transaction.php" class="sidebar-link active">Transaction</a>
             </div>
 
             <div class="col-md-10 main-content">
@@ -272,7 +272,7 @@ if ($res_rsl) {
                     <div class="panel-header">
                         <h5 class="panel-title">Transaksi Tiket</h5>
                         
-                        <form method="GET" action="admin-transaction.php" class="filter-group">
+                        <form method="GET" action="transaction.php" class="filter-group">
                             <input type="text" name="search_trx" class="search-input" placeholder="Cari user / film..." value="<?php echo isset($_GET['search_trx']) ? htmlspecialchars($_GET['search_trx']) : ''; ?>">
                             <select name="status_trx" class="filter-select" onchange="this.form.submit()">
                                 <option value="">Semua Status</option>
@@ -335,7 +335,7 @@ if ($res_rsl) {
                 <div class="data-panel">
                     <div class="panel-header">
                         <h5 class="panel-title">Transaksi Resell Tiket</h5>
-                        <form method="GET" action="admin-transaction.php" class="filter-group">
+                        <form method="GET" action="transaction.php" class="filter-group">
                             <input type="text" name="search_rsl" class="search-input" placeholder="Cari penjual / film..." value="<?php echo isset($_GET['search_rsl']) ? htmlspecialchars($_GET['search_rsl']) : ''; ?>">
                             <select name="status_rsl" class="filter-select" onchange="this.form.submit()">
                                 <option value="">Semua Status</option>

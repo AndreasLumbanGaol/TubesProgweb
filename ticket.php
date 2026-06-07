@@ -34,6 +34,8 @@ if (isset($_SESSION['user_id'])) {
     $userId = $_SESSION['UserID'];
 }
 
+$payment_error = '';
+
 // Jika user terdeteksi login, jalankan penyimpanan database
 if($userId) {
     $trxKey = "trx_" . md5($movie . $date . $time . $seats . $resell_ticket_id);
@@ -69,34 +71,75 @@ if($userId) {
             $studio_id = $row_st['StudioID'];
         }
 
-        if ($resell_ticket_id > 0) {
-            // ALUR A: PEMBELIAN RESELL
-            $insertTrx = mysqli_query($conn, "INSERT INTO `transaction` (TotalPrice, PaymentStatus, UserID) VALUES ($total, 'sukses', $userId)");
-            $transactionId = mysqli_insert_id($conn);
-            
-            if($transactionId) {
-                $query_transfer = "UPDATE ticket SET TransactionID = $transactionId, IsResale = 0, SecondPrice = NULL WHERE TicketID = $resell_ticket_id";
-                mysqli_query($conn, $query_transfer);
+        $payment_ok = true;
+        if ($method === 'Tixly Wallet') {
+            $res_bal = mysqli_query($conn, "SELECT Saldo FROM user WHERE UserID = '$userId'");
+            if ($res_bal && mysqli_num_rows($res_bal) > 0) {
+                $row_bal = mysqli_fetch_assoc($res_bal);
+                $current_saldo = $row_bal['Saldo'];
+                if ($current_saldo >= $total) {
+                    // Deduct user balance
+                    mysqli_query($conn, "UPDATE user SET Saldo = Saldo - $total WHERE UserID = '$userId'");
+                } else {
+                    $payment_ok = false;
+                }
+            } else {
+                $payment_ok = false;
             }
-        } else {
-            // ALUR B: PEMBELIAN BARU DARI HOME / FILMS
-            $insertTrx = mysqli_query($conn, "INSERT INTO `transaction` (TotalPrice, PaymentStatus, UserID) VALUES ($total, 'sukses', $userId)");
-            $transactionId = mysqli_insert_id($conn);
-            
-            if($transactionId && $seat_count > 0) {
-                foreach($seat_array as $kursi) {
-                    $kursi = trim($kursi);
-                    if(!empty($kursi)) {
-                        $query_ins_ticket = "INSERT INTO ticket (FirstPrice, Status, TransactionID, StudioID, SeatInfo, ShowtimeID, IsResale) 
-                                             VALUES ($price, 'aktif', $transactionId, $studio_id, '$kursi', $showtime_id, 0)";
-                        mysqli_query($conn, $query_ins_ticket);
+        }
+
+        if ($payment_ok) {
+            if ($resell_ticket_id > 0) {
+                // ALUR A: PEMBELIAN RESELL
+                
+                // Cari ID Penjual dan Harga Jual (SecondPrice) dari tiket sebelum ditransfer kepemilikannya
+                $query_seller = mysqli_query($conn, "
+                    SELECT tr.UserID AS SellerID, tk.SecondPrice 
+                    FROM ticket tk
+                    JOIN `transaction` tr ON tk.TransactionID = tr.TransactionID
+                    WHERE tk.TicketID = $resell_ticket_id
+                    LIMIT 1
+                ");
+                
+                if ($query_seller && mysqli_num_rows($query_seller) > 0) {
+                    $row_seller = mysqli_fetch_assoc($query_seller);
+                    $seller_id = intval($row_seller['SellerID']);
+                    $resell_price = intval($row_seller['SecondPrice']);
+                    
+                    if ($seller_id > 0 && $resell_price > 0) {
+                        // Tambahkan uang penjualan tiket ke Saldo penjual
+                        mysqli_query($conn, "UPDATE user SET Saldo = Saldo + $resell_price WHERE UserID = $seller_id");
+                    }
+                }
+
+                $insertTrx = mysqli_query($conn, "INSERT INTO `transaction` (TotalPrice, PaymentStatus, UserID) VALUES ($total, 'sukses', $userId)");
+                $transactionId = mysqli_insert_id($conn);
+                
+                if($transactionId) {
+                    $query_transfer = "UPDATE ticket SET TransactionID = $transactionId, IsResale = 0, SecondPrice = NULL WHERE TicketID = $resell_ticket_id";
+                    mysqli_query($conn, $query_transfer);
+                }
+            } else {
+                // ALUR B: PEMBELIAN BARU DARI HOME / FILMS
+                $insertTrx = mysqli_query($conn, "INSERT INTO `transaction` (TotalPrice, PaymentStatus, UserID) VALUES ($total, 'sukses', $userId)");
+                $transactionId = mysqli_insert_id($conn);
+                
+                if($transactionId && $seat_count > 0) {
+                    foreach($seat_array as $kursi) {
+                        $kursi = trim($kursi);
+                        if(!empty($kursi)) {
+                            $query_ins_ticket = "INSERT INTO ticket (FirstPrice, Status, TransactionID, StudioID, SeatInfo, ShowtimeID, IsResale) 
+                                                 VALUES ($price, 'aktif', $transactionId, $studio_id, '$kursi', $showtime_id, 0)";
+                            mysqli_query($conn, $query_ins_ticket);
+                        }
                     }
                 }
             }
+            // Kunci token transaksi agar anti-duplicate saat di-refresh (F5)
+            $_SESSION[$trxKey] = true;
+        } else {
+            $payment_error = "Saldo Dompet Tixly Anda tidak mencukupi untuk melakukan transaksi ini. Silakan isi saldo Anda terlebih dahulu.";
         }
-        
-        // Kunci token transaksi agar anti-duplicate saat di-refresh (F5)
-        $_SESSION[$trxKey] = true;
     }
 }
 // -----------------------------------------------------------------
@@ -144,7 +187,7 @@ $booking_code = "TXL-2026-" . $movie_code . "-" . $random_num;
         .ticket-value-highlight { color: #d4af37; font-weight: bold; }
         .dashed-line { border-top: 1px dashed #3a2626; margin: 25px 0; }
         .qr-section { display: flex; align-items: center; gap: 24px; }
-        .qr-img { width: 100px; height: 100px; border: 4px solid #fff; border-radius: 4px; }
+        .qr-img { width: 100px; height: 100px; object-fit: cover; border: 2px solid #d4af37; border-radius: 8px; }
         .booking-code { font-family: monospace; font-size: 18px; letter-spacing: 1px; color: #d4af37; font-weight: bold; margin-bottom: 8px; }
         .qr-desc { color: #888; margin: 0; font-size: 13px; line-height: 1.4; }
         .qr-desc span { color: #ffffff; font-weight: bold; }
@@ -155,8 +198,6 @@ $booking_code = "TXL-2026-" . $movie_code . "-" . $random_num;
         .total-label { color: #d4af37; font-weight: bold; font-size: 15px; }
         .badge-method { background-color: #3b3b3b; color: #aaa; font-size: 11px; padding: 4px 8px; border-radius: 4px; margin-right: 8px; }
         .total-amount { color: #d4af37; font-weight: bold; font-size: 16px; }
-        .btn-download { background-color: #d4af37; color: #000; width: 100%; font-weight: bold; padding: 16px; border-radius: 8px; border: none; cursor: pointer; transition: 0.3s; margin-bottom: 48px; }
-        .btn-download:hover { background-color: #b8962e; }
     </style>
 </head>
 <body>
@@ -178,57 +219,75 @@ $booking_code = "TXL-2026-" . $movie_code . "-" . $random_num;
 
     <div class="container ticket-section">
         <div class="ticket-wrapper">
-            <div class="success-header">
-                <div class="success-circle" style="border-color: #20c997; box-shadow: 0 0 15px rgba(32, 201, 151, 0.2);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#20c997" class="bi bi-check-lg" viewBox="0 0 16 16"><path d="M12.736 1.4A1 1 0 0 1 13 2v7.184a1 1 0 0 1-.264.688L9.043 14H3.07l-3-3a1 1 0 0 1 0-1.414l1.414-1.414a1 1 0 0 1 1.414 0L5 10.243l6.322-6.322a1 1 0 0 1 1.414 0Z"/></svg>
+            <?php if (!empty($payment_error)): ?>
+                <div class="success-header">
+                    <div class="success-circle" style="border-color: #dc3545; box-shadow: 0 0 15px rgba(220, 53, 69, 0.2); margin-top: 40px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#dc3545" class="bi x-lg" viewBox="0 0 16 16">
+                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                        </svg>
+                    </div>
+                    <h2 class="success-title" style="color: #dc3545;">Pembayaran <span>Gagal</span></h2>
+                    <p class="success-subtitle"><?php echo htmlspecialchars($payment_error); ?></p>
                 </div>
-                <h2 class="success-title">Pembayaran <span>Berhasil</span></h2>
-                <p class="success-subtitle">Transaksi dikonfirmasi - <?php echo date("d M Y, H:i"); ?> WIB</p>
-            </div>
-
-            <div class="box-panel border-success-box">
-                <h6 style="color: #20c997; margin:0 0 4px 0; font-weight: bold;">Tiket Aktif & Siap Digunakan</h6>
-                <p style="margin: 0; color: #888; font-size: 14px;">Tunjukkan QR Code di bawah kepada petugas bioskop saat masuk</p>
-            </div>
-
-            <div class="box-panel border-ticket">
-                <div class="movie-header">
-                    <h2 class="movie-title"><?php echo htmlspecialchars($movie); ?></h2>
-                    <p class="movie-genre">Tixly Cinema Digital Pass</p>
-                </div>
-
-                <div class="ticket-details-grid">
-                    <div><div class="ticket-label">TANGGAL</div><div class="ticket-value"><?php echo htmlspecialchars($date); ?></div></div>
-                    <div><div class="ticket-label">JAM TAYANG</div><div class="ticket-value"><?php echo htmlspecialchars($time); ?></div></div>
-                    <div><div class="ticket-label">DURASI</div><div class="ticket-value"><?php echo htmlspecialchars($duration); ?></div></div>
-                    <div><div class="ticket-label">BIOSKOP</div><div class="ticket-value"><?php echo htmlspecialchars($cinema); ?></div></div>
-                    <div><div class="ticket-label">STUDIO</div><div class="ticket-value"><?php echo htmlspecialchars($type); ?></div></div>
-                    <div><div class="ticket-label">KURSI</div><div class="ticket-value ticket-value-highlight"><?php echo htmlspecialchars($seats); ?></div></div>
-                </div>
-
-                <div class="dashed-line"></div>
-
-                <div class="qr-section">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=<?php echo urlencode($booking_code); ?>&color=ffffff&bgcolor=150808" alt="QR Code" class="qr-img">
-                    <div>
-                        <div class="ticket-label">KODE BOOKING</div>
-                        <div class="booking-code"><?php echo htmlspecialchars($booking_code); ?></div>
-                        <p class="qr-desc">Scan QR Code ini di pintu masuk<br>studio <?php echo htmlspecialchars($cinema); ?>.<br>Berlaku untuk <span><?php echo $seat_count; ?> orang.</span></p>
+                
+                <div class="box-panel text-center py-5" style="border: 1px solid rgba(220, 53, 69, 0.3); background-color: rgba(220, 53, 69, 0.05); border-radius: 20px;">
+                    <p class="mb-4 text-white-50">Silakan hubungi administrator atau gunakan metode pembayaran alternatif lainnya.</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="profile.php" class="btn btn-warning px-4 py-2" style="font-weight: bold; border-radius: 8px; background: linear-gradient(135deg, #d4af37 0%, #b8962e 100%); border: none; color: #000;">Ke Profil</a>
+                        <a href="javascript:history.back()" class="btn btn-outline-light px-4 py-2" style="font-weight: bold; border-radius: 8px;">Kembali ke Pembayaran</a>
                     </div>
                 </div>
-            </div>
-
-            <div class="box-panel border-ticket">
-                <h6 class="summary-title">Ringkasan Pembayaran</h6>
-                <div class="summary-row"><span><?php echo $seat_count; ?>x Tiket <?php echo htmlspecialchars($type); ?></span><span>Rp <?php echo number_format($subtotal, 0, ',', '.'); ?></span></div>
-                <div class="summary-row"><span>Biaya Layanan</span><span>Rp 3.000</span></div>
-                <div class="summary-total">
-                    <span class="total-label">Total Dibayar</span>
-                    <div><span class="badge-method"><?php echo htmlspecialchars($method); ?></span><span class="total-amount">Rp <?php echo number_format($total, 0, ',', '.'); ?></span></div>
+            <?php else: ?>
+                <div class="success-header">
+                    <div class="success-circle" style="border-color: #20c997; box-shadow: 0 0 15px rgba(32, 201, 151, 0.2);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#20c997" class="bi bi-check-lg" viewBox="0 0 16 16"><path d="M12.736 1.4A1 1 0 0 1 13 2v7.184a1 1 0 0 1-.264.688L9.043 14H3.07l-3-3a1 1 0 0 1 0-1.414l1.414-1.414a1 1 0 0 1 1.414 0L5 10.243l6.322-6.322a1 1 0 0 1 1.414 0Z"/></svg>
+                    </div>
+                    <h2 class="success-title">Pembayaran <span>Berhasil</span></h2>
+                    <p class="success-subtitle">Transaksi dikonfirmasi - <?php echo date("d M Y, H:i"); ?> WIB</p>
                 </div>
-            </div>
 
-            <button class="btn-download" onclick="window.print()">Unduh Tiket</button>
+                <div class="box-panel border-success-box">
+                    <h6 style="color: #20c997; margin:0 0 4px 0; font-weight: bold;">Tiket Aktif & Siap Digunakan</h6>
+                    <p style="margin: 0; color: #888; font-size: 14px;">Tunjukkan QR Code di bawah kepada petugas bioskop saat masuk</p>
+                </div>
+
+                <div class="box-panel border-ticket">
+                    <div class="movie-header">
+                        <h2 class="movie-title"><?php echo htmlspecialchars($movie); ?></h2>
+                        <p class="movie-genre">Tixly Cinema Digital Pass</p>
+                    </div>
+
+                    <div class="ticket-details-grid">
+                        <div><div class="ticket-label">TANGGAL</div><div class="ticket-value"><?php echo htmlspecialchars($date); ?></div></div>
+                        <div><div class="ticket-label">JAM TAYANG</div><div class="ticket-value"><?php echo htmlspecialchars($time); ?></div></div>
+                        <div><div class="ticket-label">DURASI</div><div class="ticket-value"><?php echo htmlspecialchars($duration); ?></div></div>
+                        <div><div class="ticket-label">BIOSKOP</div><div class="ticket-value"><?php echo htmlspecialchars($cinema); ?></div></div>
+                        <div><div class="ticket-label">STUDIO</div><div class="ticket-value"><?php echo htmlspecialchars($type); ?></div></div>
+                        <div><div class="ticket-label">KURSI</div><div class="ticket-value ticket-value-highlight"><?php echo htmlspecialchars($seats); ?></div></div>
+                    </div>
+
+                    <div class="dashed-line"></div>
+
+                    <div class="qr-section">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<?php echo urlencode($booking_code); ?>&color=000000&bgcolor=ffffff" alt="QR Code" class="qr-img">
+                        <div>
+                            <div class="ticket-label">KODE BOOKING</div>
+                            <div class="booking-code"><?php echo htmlspecialchars($booking_code); ?></div>
+                            <p class="qr-desc">Scan QR Code ini di pintu masuk<br>studio <?php echo htmlspecialchars($cinema); ?>.<br>Berlaku untuk <span><?php echo $seat_count; ?> orang.</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box-panel border-ticket">
+                    <h6 class="summary-title">Ringkasan Pembayaran</h6>
+                    <div class="summary-row"><span><?php echo $seat_count; ?>x Tiket <?php echo htmlspecialchars($type); ?></span><span>Rp <?php echo number_format($subtotal, 0, ',', '.'); ?></span></div>
+                    <div class="summary-row"><span>Biaya Layanan</span><span>Rp 3.000</span></div>
+                    <div class="summary-total">
+                        <span class="total-label">Total Dibayar</span>
+                        <div><span class="badge-method"><?php echo htmlspecialchars($method); ?></span><span class="total-amount">Rp <?php echo number_format($total, 0, ',', '.'); ?></span></div>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div> 
     </div> 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -1813,17 +1813,18 @@ CREATE TABLE `user` (
   `Email` varchar(100) NOT NULL,
   `Password` varchar(255) NOT NULL,
   `Phone` varchar(15) DEFAULT NULL,
-  `Role` varchar(20) DEFAULT 'user'
+  `Role` varchar(20) DEFAULT 'user',
+  `Saldo` int(11) NOT NULL DEFAULT 500000
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data untuk tabel `user`
 --
 
-INSERT INTO `user` (`UserID`, `Nama`, `Email`, `Password`, `Phone`, `Role`) VALUES
-(1, 'Administrator Tixly', 'admin@tixly.com', 'admin123', '081122334455', 'admin'),
-(2, 'Andreas Lumban', 'andreas@gmail.com', 'andreas123', '0815123456', 'user'),
-(3, 'derik l', 'derik@gmail.com', 'derik123', '0983i3543', 'user');
+INSERT INTO `user` (`UserID`, `Nama`, `Email`, `Password`, `Phone`, `Role`, `Saldo`) VALUES
+(1, 'Administrator Tixly', 'admin@tixly.com', 'admin123', '081122334455', 'admin', 500000),
+(2, 'Andreas Lumban', 'andreas@gmail.com', 'andreas123', '0815123456', 'user', 500000),
+(3, 'derik l', 'derik@gmail.com', 'derik123', '0983i3543', 'user', 500000);
 
 --
 -- Indexes for dumped tables

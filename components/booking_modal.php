@@ -200,7 +200,7 @@ if ($studio_types_query) {
 
         dropdownJadwal.innerHTML = '<option value="">Mencari Jadwal...</option>';
 
-        fetch(`api_jadwal.php?movie=${encodeURIComponent(movieTitle)}&cinema=${encodeURIComponent(selectedCinema)}&type=${encodeURIComponent(selectedStudio)}`)
+        fetch(`api/api_jadwal.php?movie=${encodeURIComponent(movieTitle)}&cinema=${encodeURIComponent(selectedCinema)}&type=${encodeURIComponent(selectedStudio)}`)
             .then(response => response.json())
             .then(data => {
                 dropdownJadwal.innerHTML = ''; 

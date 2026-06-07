@@ -1,4 +1,9 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+include 'koneksi.php';
+
 $movie = isset($_GET['movie']) ? $_GET['movie'] : 'Wonka';
 $poster = isset($_GET['poster']) ? $_GET['poster'] : 'https://image.tmdb.org/t/p/w200/qhb1qOilapbapxWQn9jtRCMwXJF.jpg';
 $duration = isset($_GET['duration']) ? $_GET['duration'] : '1h 56m';
@@ -16,6 +21,21 @@ if ($seats === '' || empty($seats)) {
     $seat_count = 0;
 }
 $subtotal = $seat_count * $price;
+
+$userId = null;
+if (isset($_SESSION['user_id'])) {
+    $userId = $_SESSION['user_id'];
+} elseif (isset($_SESSION['UserID'])) {
+    $userId = $_SESSION['UserID'];
+}
+
+$userBalance = 0;
+if ($userId) {
+    $res_bal = mysqli_query($conn, "SELECT Saldo FROM user WHERE UserID = '$userId'");
+    if ($res_bal && mysqli_num_rows($res_bal) > 0) {
+        $userBalance = mysqli_fetch_assoc($res_bal)['Saldo'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -475,18 +495,37 @@ $subtotal = $seat_count * $price;
             <!-- PANEL KIRI: METODE PEMBAYARAN -->
             <div class="col-lg-7">
                 <div class="box-panel">
-                    <h5 class="panel-title">Pilih Metode Pembayaran</h5>
-                    
-                    <!-- Kategori E-Wallet -->
-                    <div class="payment-category-title">E-Wallet & Instan</div>
-                    <div class="row row-cols-2 row-cols-md-3 g-3 payment-methods-grid">
-                        <div class="col">
-                            <button class="payment-method-card gopay active" onclick="selectPayment(this, 'GoPay')">
-                                <span class="selected-badge">&#10003;</span>
-                                <span class="payment-method-logo logo-gopay">GoPay</span>
-                                <span class="payment-method-desc">Instant Pay</span>
-                            </button>
-                        </div>
+                     <h5 class="panel-title">Pilih Metode Pembayaran</h5>
+                     
+                     <!-- Kategori Dompet Utama -->
+                     <div class="payment-category-title">Metode Utama</div>
+                     <div class="row row-cols-1 g-3 payment-methods-grid mb-4">
+                         <div class="col-12">
+                             <button class="payment-method-card active w-100 d-flex flex-row justify-content-between px-4 py-3 align-items-center" onclick="selectPayment(this, 'Tixly Wallet')" style="height: auto; min-height: 80px;">
+                                 <span class="selected-badge" style="top: 50%; transform: translateY(-50%) scale(1); right: 24px;">&#10003;</span>
+                                 <div class="text-start">
+                                     <span class="payment-method-logo d-block" style="color: var(--gold); font-size: 20px; font-weight: 800; margin-bottom: 0;">Dompet Tixly</span>
+                                     <span class="payment-method-desc" style="font-size: 13px; color: #fff; text-transform: none; letter-spacing: 0;">Saldo: <strong>Rp <?php echo number_format($userBalance, 0, ',', '.'); ?></strong></span>
+                                 </div>
+                                 <?php if ($userBalance < $total): ?>
+                                     <span class="badge bg-danger p-2" style="font-size: 11px;">Saldo Kurang</span>
+                                 <?php else: ?>
+                                     <span class="badge bg-success p-2" style="font-size: 11px;">Saldo Cukup</span>
+                                 <?php endif; ?>
+                             </button>
+                         </div>
+                     </div>
+
+                     <!-- Kategori E-Wallet -->
+                     <div class="payment-category-title">E-Wallet & Instan</div>
+                     <div class="row row-cols-2 row-cols-md-3 g-3 payment-methods-grid">
+                         <div class="col">
+                             <button class="payment-method-card gopay" onclick="selectPayment(this, 'GoPay')">
+                                 <span class="selected-badge">&#10003;</span>
+                                 <span class="payment-method-logo logo-gopay">GoPay</span>
+                                 <span class="payment-method-desc">Instant Pay</span>
+                             </button>
+                         </div>
                         <div class="col">
                             <button class="payment-method-card qris" onclick="selectPayment(this, 'QRIS')">
                                 <span class="selected-badge">&#10003;</span>
@@ -613,7 +652,9 @@ $subtotal = $seat_count * $price;
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        let selectedMethod = 'GoPay'; // default active
+        let selectedMethod = 'Tixly Wallet'; // default active
+        const userBalance = <?php echo $userBalance; ?>;
+        const totalAmount = <?php echo $total; ?>;
 
         function selectPayment(clickedBtn, methodName) {
             // Hapus kelas active dari semua metode pembayaran
@@ -628,6 +669,26 @@ $subtotal = $seat_count * $price;
             
             // Perbarui link checkout
             updateContinueUrl();
+
+            // Validasi saldo
+            validateBalance();
+        }
+
+        function validateBalance() {
+            const continueBtn = document.getElementById('continue-checkout-btn');
+            if (!continueBtn) return;
+
+            if (selectedMethod === 'Tixly Wallet' && userBalance < totalAmount) {
+                continueBtn.classList.add('disabled');
+                continueBtn.style.pointerEvents = 'none';
+                continueBtn.style.opacity = '0.5';
+                continueBtn.innerHTML = 'Saldo Tidak Cukup &rarr;';
+            } else {
+                continueBtn.classList.remove('disabled');
+                continueBtn.style.pointerEvents = 'auto';
+                continueBtn.style.opacity = '1';
+                continueBtn.innerHTML = 'Bayar Sekarang &rarr;';
+            }
         }
 
         function updateContinueUrl() {
@@ -647,6 +708,7 @@ $subtotal = $seat_count * $price;
         // Jalankan saat halaman dimuat
         document.addEventListener("DOMContentLoaded", function() {
             updateContinueUrl();
+            validateBalance();
         });
     </script>
 </body>

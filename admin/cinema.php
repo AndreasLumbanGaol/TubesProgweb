@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'koneksi.php';
+include '../koneksi.php';
 $page = 'cinema';
 
 $genres = ['Aksi', 'Drama', 'Komedi', 'Horror', 'Romantis', 'Sci-Fi', 'Animasi', 'Thriller'];
@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 $message = "Film dan jadwal tayang berhasil diperbarui!";
-                header("Location: admin-index.php?message=" . urlencode($message));
+                header("Location: index.php?message=" . urlencode($message));
                 exit();
             } else {
                 $message = "Gagal memperbarui film: " . mysqli_error($conn);
@@ -171,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 $message = "Film berhasil ditambahkan ke Database!";
-                header("Location: admin-index.php?message=" . urlencode($message));
+                header("Location: index.php?message=" . urlencode($message));
                 exit();
             } else {
                 $message = "Gagal menambahkan film: " . mysqli_error($conn);
@@ -415,13 +415,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="row">
             
             <div class="col-md-2 sidebar">
-                <a href="admin-index.php" class="sidebar-link <?php echo $page == 'dashboard' ? 'active' : ''; ?>">
+                <a href="index.php" class="sidebar-link <?php echo $page == 'dashboard' ? 'active' : ''; ?>">
                     Dashboard
                 </a>
-                <a href="admin-cinema.php" class="sidebar-link <?php echo $page == 'cinema' ? 'active' : ''; ?>">
+                <a href="cinema.php" class="sidebar-link <?php echo $page == 'cinema' ? 'active' : ''; ?>">
                     Cinema
                 </a>
-                <a href="admin-transaction.php" class="sidebar-link <?php echo $page == 'transaction' ? 'active' : ''; ?>">
+                <a href="transaction.php" class="sidebar-link <?php echo $page == 'transaction' ? 'active' : ''; ?>">
                     Transaction
                 </a>
             </div>
@@ -434,7 +434,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="alert-success"><?php echo htmlspecialchars($message); ?></div>
                 <?php endif; ?>
 
-                <form action="admin-cinema.php" method="POST">
+                <form action="cinema.php" method="POST">
                     <input type="hidden" name="edit_id" value="<?php echo $edit_id; ?>">
                     
                     <div class="form-panel">

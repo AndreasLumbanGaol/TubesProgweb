@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'koneksi.php';
+include '../koneksi.php';
 $page = 'dashboard';
 
 // Handle delete film action
@@ -103,14 +103,14 @@ $movies_query = mysqli_query($conn, "SELECT * FROM movie ORDER BY MovieID DESC")
 </head>
 <body>
     <nav class="navbar navbar-dark">
-        <a class="navbar-brand" href="index.php">Tixly<span>Cinema</span></a>
+        <a class="navbar-brand" href="../index.php">Tixly<span>Cinema</span></a>
     </nav>
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-2 sidebar">
-                <a href="admin-index.php" class="sidebar-link active">Dashboard</a>
-                <a href="admin-cinema.php" class="sidebar-link">Cinema</a>
-                <a href="admin-transaction.php" class="sidebar-link">Transaction</a>
+                <a href="index.php" class="sidebar-link active">Dashboard</a>
+                <a href="cinema.php" class="sidebar-link">Cinema</a>
+                <a href="transaction.php" class="sidebar-link">Transaction</a>
             </div>
 
             <div class="col-md-10 main-content">
@@ -150,7 +150,7 @@ $movies_query = mysqli_query($conn, "SELECT * FROM movie ORDER BY MovieID DESC")
                 <div class="data-panel">
                     <div class="panel-header">
                         <h5 class="panel-title">Daftar Film</h5>
-                        <a href="admin-cinema.php" class="btn-add"><i class="fas fa-plus me-1"></i> Tambah Film Baru</a>
+                        <a href="cinema.php" class="btn-add"><i class="fas fa-plus me-1"></i> Tambah Film Baru</a>
                     </div>
 
                     <div class="table-responsive">
@@ -185,7 +185,7 @@ $movies_query = mysqli_query($conn, "SELECT * FROM movie ORDER BY MovieID DESC")
                                     </td>
                                     <td style="text-align: center;">
                                         <div class="d-flex gap-2 justify-content-center">
-                                            <a href="admin-cinema.php?edit_id=<?php echo $movie['MovieID']; ?>" class="btn-edit-action"><i class="fas fa-edit me-1"></i> Edit</a>
+                                            <a href="cinema.php?edit_id=<?php echo $movie['MovieID']; ?>" class="btn-edit-action"><i class="fas fa-edit me-1"></i> Edit</a>
                                             <a href="?delete_id=<?php echo $movie['MovieID']; ?>" class="btn-delete" onclick="return confirm('Apakah Anda yakin ingin menghapus film ini? Semua jadwal dan tiket terkait juga akan terhapus.');"><i class="fas fa-trash-alt me-1"></i> Hapus</a>
                                         </div>
                                     </td>

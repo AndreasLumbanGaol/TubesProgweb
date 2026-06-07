@@ -132,8 +132,8 @@ if (isset($_GET['set_location'])) {
     </div>
 
     <?php 
-    if(file_exists('booking_modal.php')){
-        include 'booking_modal.php'; 
+    if(file_exists('components/booking_modal.php')){
+        include 'components/booking_modal.php'; 
     }
     ?>
 

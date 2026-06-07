@@ -22,7 +22,7 @@ $userName = "User";
 $userEmail = "";
 $userPhone = "081572152613";
 $role = "user";
-$walletBalance = 500000;
+$walletBalance = 0;
 
 // Mengambil id dari session login sistem
 $isLoggedIn = isset($_SESSION['UserID']) || isset($_SESSION['user_id']);
@@ -32,13 +32,13 @@ if ($isLoggedIn) {
 }
 
 // ===================================================================
-// LOGIKA PHP: PROSES UPDATE DATA PROFIL (KETIKA MODAL DISUBMIT)
+// LOGIKA PHP: PROSES UPDATE DATA PROFIL (KETIKA DISUBMIT)
 // ===================================================================
 $updateMessage = "";
 $updateClass = "";
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
-    if ($userId) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'update_profile' && $userId) {
         $newNama  = mysqli_real_escape_string($conn, $_POST['nama']);
         $newEmail = mysqli_real_escape_string($conn, $_POST['email']);
         $newPhone = mysqli_real_escape_string($conn, $_POST['phone']);
@@ -87,6 +87,7 @@ if ($userId) {
         $userEmail = $user['Email'];
         $userPhone = $user['Phone'] ? $user['Phone'] : "081572152613";
         $role = $user['Role'];
+        $walletBalance = $user['Saldo'];
     }
 }
 
@@ -120,6 +121,7 @@ if ($userId) {
     <title>Tixly Cinema - Profile Premium</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --gold-primary: #d4af37;
@@ -172,7 +174,7 @@ if ($userId) {
         }
         .ticket-box::before { top: -12px; } .ticket-box::after { bottom: -12px; }
         .ticket-main { padding: 24px; flex-grow: 1; display: flex; gap: 20px; }
-        .ticket-poster { width: 100px; aspect-ratio: 2/3; object-fit: cover; border-radius: 12px; }
+        .ticket-poster { width: 100px; object-fit: cover; border-radius: 12px; }
         .ticket-movie-title { font-size: 21px; font-weight: 800; color: #ffffff; margin: 0; }
         .ticket-meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; margin-top: 10px; }
         .meta-cell-label { color: #666666; font-size: 9px; text-transform: uppercase; }
@@ -280,7 +282,7 @@ if ($userId) {
                                     <div style="font-family: serif; font-weight:800; color:#d4af37;">Tixly<span>Cinema</span></div>
                                     <span class="stub-status-badge">Tiket Aktif</span>
                                     <div style="width:100%;">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Barcode-128.svg/640px-Barcode-128.svg.png" class="stub-barcode-img" alt="Barcode">
+                                        <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TX-<?php echo $ticket['TicketID']; ?>&scale=2&rotate=N&includeheader=false" alt="Barcode" class="stub-barcode-img" style="background: #ffffff; padding: 4px; object-fit: contain;">
                                         <span class="small monospace d-block text-dark bg-white">TX-<?php echo $ticket['TicketID']; ?></span>
                                     </div>
                                 </div>
@@ -335,12 +337,11 @@ if ($userId) {
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // Edit Profile Modal
             const btnEditProfile = document.getElementById('btn-edit-profile');
             if (btnEditProfile) {
                 btnEditProfile.addEventListener('click', function(e) {
-                    e.preventDefault(); // Menahan navigasi default '#'
-                    
-                    // Inisialisasi dan munculkan modal edit profile secara terprogram
+                    e.preventDefault();
                     const editModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
                     editModal.show();
                 });
