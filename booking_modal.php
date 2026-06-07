@@ -1,3 +1,23 @@
+<?php
+include_once 'koneksi.php';
+$selected_loc = isset($_SESSION['selected_location']) ? $_SESSION['selected_location'] : 'Bandung';
+$selected_loc_escaped = mysqli_real_escape_string($conn, $selected_loc);
+$theaters_query = mysqli_query($conn, "SELECT * FROM theater WHERE Location = '$selected_loc_escaped' ORDER BY TheaterID ASC");
+$modal_theaters = [];
+if ($theaters_query) {
+    while ($row = mysqli_fetch_assoc($theaters_query)) {
+        $modal_theaters[] = $row;
+    }
+}
+
+$theater_studios = [];
+$studio_types_query = mysqli_query($conn, "SELECT TheaterID, Type FROM studio");
+if ($studio_types_query) {
+    while ($row = mysqli_fetch_assoc($studio_types_query)) {
+        $theater_studios[$row['TheaterID']][] = $row['Type'];
+    }
+}
+?>
 <style>
     .tixly-modal .modal-content {
         background: linear-gradient(135deg, #120707 0%, #0a0303 100%);
@@ -80,27 +100,29 @@
                     <div class="mb-4">
                         <div class="form-section-title">Pilih Bioskop</div>
                         <div class="row g-3">
+                            <?php if (!empty($modal_theaters)): foreach ($modal_theaters as $idx => $t): 
+                                $checked = ($idx === 0) ? 'checked' : '';
+                                $brand_class = 'brand-cinemapolis';
+                                $brand_short = 'Tixly';
+                                $sub_name = str_replace(['XXI ', 'CGV ', 'Tixly '], '', $t['Name']);
+                                if (stripos($t['Name'], 'XXI') !== false) {
+                                    $brand_class = 'brand-xxi';
+                                    $brand_short = 'XXI';
+                                } elseif (stripos($t['Name'], 'CGV') !== false) {
+                                    $brand_class = 'brand-cgv';
+                                    $brand_short = 'CGV';
+                                }
+                            ?>
                             <div class="col-md-4">
-                                <input type="radio" class="btn-check-custom" name="cinema" id="cinema-xxi" value="XXI Botanica Mall" onchange="fetchJadwal()" checked>
-                                <label class="card-selection-option" for="cinema-xxi">
-                                    <span class="cinema-brand-title brand-xxi">XXI</span>
-                                    <span class="cinema-brand-sub">Botanica Mall</span>
+                                <input type="radio" class="btn-check-custom" name="cinema" id="cinema-<?php echo $t['TheaterID']; ?>" value="<?php echo htmlspecialchars($t['Name']); ?>" onchange="updateStudioOptions()" <?php echo $checked; ?> data-theater-id="<?php echo $t['TheaterID']; ?>">
+                                <label class="card-selection-option" for="cinema-<?php echo $t['TheaterID']; ?>">
+                                    <span class="cinema-brand-title <?php echo $brand_class; ?>"><?php echo $brand_short; ?></span>
+                                    <span class="cinema-brand-sub"><?php echo htmlspecialchars($sub_name); ?></span>
                                 </label>
                             </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check-custom" name="cinema" id="cinema-cgv" value="CGV Paskal 23" onchange="fetchJadwal()">
-                                <label class="card-selection-option" for="cinema-cgv">
-                                    <span class="cinema-brand-title brand-cgv">CGV</span>
-                                    <span class="cinema-brand-sub">Paskal 23</span>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check-custom" name="cinema" id="cinema-tixly" value="Tixly Central" onchange="fetchJadwal()">
-                                <label class="card-selection-option" for="cinema-tixly">
-                                    <span class="cinema-brand-title brand-cinemapolis">Tixly</span>
-                                    <span class="cinema-brand-sub">Central</span>
-                                </label>
-                            </div>
+                            <?php endforeach; else: ?>
+                            <div class="col-12 text-center text-muted">Tidak ada bioskop di kota ini.</div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -155,11 +177,26 @@
 </div>
 
 <script>
+    const theaterStudios = <?php echo json_encode($theater_studios); ?>;
+    const cinemaPrices = {
+        "XXI": { "Regular": 50000, "Velvet": 120000, "Gold Class": 150000 },
+        "CGV": { "Regular": 35000, "Velvet": 90000, "Gold Class": 110000 },
+        "Tixly": { "Regular": 40000, "Velvet": 100000, "Gold Class": 130000 }
+    };
+
     function fetchJadwal() {
         const movieTitle = document.getElementById('modal-movie-title').textContent;
-        const selectedCinema = document.querySelector('input[name="cinema"]:checked').value;
-        const selectedStudio = document.querySelector('input[name="studio_type"]:checked').value;
+        const checkedCinema = document.querySelector('input[name="cinema"]:checked');
+        const checkedStudio = document.querySelector('input[name="studio_type"]:checked');
         const dropdownJadwal = document.getElementById('booking_jadwal');
+
+        if (!checkedCinema || !checkedStudio) {
+            dropdownJadwal.innerHTML = '<option value="">Pilih bioskop dan studio terlebih dahulu</option>';
+            return;
+        }
+
+        const selectedCinema = checkedCinema.value;
+        const selectedStudio = checkedStudio.value;
 
         dropdownJadwal.innerHTML = '<option value="">Mencari Jadwal...</option>';
 
@@ -183,33 +220,72 @@
             });
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        const cinemaPrices = {
-            "XXI Botanica Mall": { "Regular": 50000, "Velvet": 120000, "Gold Class": 150000 },
-            "CGV Paskal 23": { "Regular": 35000, "Velvet": 90000, "Gold Class": 110000 },
-            "Tixly Central": { "Regular": 40000, "Velvet": 100000, "Gold Class": 130000 }
-        };
+    function updateStudioPrices() {
+        const checkedCinema = document.querySelector('input[name="cinema"]:checked');
+        if (!checkedCinema) return;
+        const selectedCinemaName = checkedCinema.value;
+        
+        let brand = "Tixly";
+        if (selectedCinemaName.includes("XXI")) brand = "XXI";
+        else if (selectedCinemaName.includes("CGV")) brand = "CGV";
+        
+        const prices = cinemaPrices[brand];
+        if (prices) {
+            const regInput = document.getElementById('type-regular');
+            regInput.setAttribute('data-price', prices.Regular);
+            regInput.nextElementSibling.querySelector('.studio-type-price').textContent = "Rp " + prices.Regular.toLocaleString('id-ID');
 
-        function updateStudioPrices() {
-            const selectedCinema = document.querySelector('input[name="cinema"]:checked').value;
-            const prices = cinemaPrices[selectedCinema];
-            if (prices) {
-                const regInput = document.getElementById('type-regular');
-                regInput.setAttribute('data-price', prices.Regular);
-                regInput.nextElementSibling.querySelector('.studio-type-price').textContent = "Rp " + prices.Regular.toLocaleString('id-ID');
+            const velInput = document.getElementById('type-velvet');
+            velInput.setAttribute('data-price', prices.Velvet);
+            velInput.nextElementSibling.querySelector('.studio-type-price').textContent = "Rp " + prices.Velvet.toLocaleString('id-ID');
 
-                const velInput = document.getElementById('type-velvet');
-                velInput.setAttribute('data-price', prices.Velvet);
-                velInput.nextElementSibling.querySelector('.studio-type-price').textContent = "Rp " + prices.Velvet.toLocaleString('id-ID');
-
-                const goldInput = document.getElementById('type-gold');
-                goldInput.setAttribute('data-price', prices["Gold Class"]);
-                goldInput.nextElementSibling.querySelector('.studio-type-price').textContent = "Rp " + prices["Gold Class"].toLocaleString('id-ID');
-            }
+            const goldInput = document.getElementById('type-gold');
+            goldInput.setAttribute('data-price', prices["Gold Class"]);
+            goldInput.nextElementSibling.querySelector('.studio-type-price').textContent = "Rp " + prices["Gold Class"].toLocaleString('id-ID');
         }
+    }
 
+    function updateStudioOptions() {
+        const checkedCinema = document.querySelector('input[name="cinema"]:checked');
+        if (!checkedCinema) return;
+        
+        const theaterId = checkedCinema.getAttribute('data-theater-id');
+        const availableTypes = theaterStudios[theaterId] || [];
+        
+        const types = ['Regular', 'Velvet', 'Gold Class'];
+        let firstAvailableSelected = false;
+
+        types.forEach(type => {
+            const inputId = 'type-' + (type === 'Gold Class' ? 'gold' : type.toLowerCase());
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const col = input.closest('.col-md-4');
+
+            const isAvailable = availableTypes.includes(type) || (type === 'Gold Class' && availableTypes.includes('Gold Class'));
+            
+            if (isAvailable) {
+                col.style.display = 'block';
+                if (!firstAvailableSelected) {
+                    input.checked = true;
+                    firstAvailableSelected = true;
+                }
+            } else {
+                col.style.display = 'none';
+                input.checked = false;
+            }
+        });
+        
+        updateStudioPrices();
+        fetchJadwal();
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
         document.querySelectorAll('input[name="cinema"]').forEach(radio => {
-            radio.addEventListener('change', updateStudioPrices);
+            radio.addEventListener('change', updateStudioOptions);
+        });
+
+        document.querySelectorAll('input[name="studio_type"]').forEach(radio => {
+            radio.addEventListener('change', fetchJadwal);
         });
 
         const bookingModal = document.getElementById('bookingModal');
@@ -222,16 +298,18 @@
                 document.getElementById('hidden-movie-poster').value = triggerElement.getAttribute('data-poster');
                 document.getElementById('modal-movie-duration').querySelector('span').textContent = triggerElement.getAttribute('data-duration') || 'N/A';
 
-                updateStudioPrices();
-                fetchJadwal();
+                updateStudioOptions();
             });
         }
 
         const confirmBtn = document.getElementById('confirm-booking-btn');
         if (confirmBtn) {
             confirmBtn.addEventListener('click', function() {
+                const checkedCinema = document.querySelector('input[name="cinema"]:checked');
+                const checkedStudio = document.querySelector('input[name="studio_type"]:checked');
                 const rawJadwal = document.getElementById('booking_jadwal').value;
-                if(!rawJadwal) {
+                
+                if(!checkedCinema || !checkedStudio || !rawJadwal) {
                     alert("Maaf, jadwal belum tersedia untuk bioskop atau studio ini. Silakan pilih opsi lain.");
                     return;
                 }
@@ -242,9 +320,9 @@
                     movie: document.getElementById('modal-movie-title').textContent,
                     poster: document.getElementById('hidden-movie-poster').value,
                     duration: document.getElementById('modal-movie-duration').textContent.trim(),
-                    cinema: document.querySelector('input[name="cinema"]:checked').value,
-                    type: document.querySelector('input[name="studio_type"]:checked').value,
-                    price: document.querySelector('input[name="studio_type"]:checked').getAttribute('data-price'),
+                    cinema: checkedCinema.value,
+                    type: checkedStudio.value,
+                    price: checkedStudio.getAttribute('data-price'),
                     date: splitJadwal[0],
                     time: splitJadwal[1]
                 });

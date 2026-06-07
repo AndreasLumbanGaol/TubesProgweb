@@ -98,7 +98,14 @@ if (isset($_GET['set_location'])) {
 
         <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 movie-grid">
             <?php
-            $query_all = "SELECT * FROM movie ORDER BY MovieID ASC";
+            $loc = mysqli_real_escape_string($conn, $_SESSION['selected_location']);
+            $query_all = "SELECT DISTINCT m.* 
+                          FROM movie m
+                          LEFT JOIN showtime s ON m.MovieID = s.MovieID
+                          LEFT JOIN studio st ON s.StudioID = st.StudioID
+                          LEFT JOIN theater t ON st.TheaterID = t.TheaterID
+                          WHERE t.Location = '$loc' OR m.Rating = 0
+                          ORDER BY m.MovieID ASC";
             $res_all = mysqli_query($conn, $query_all);
             if ($res_all) {
                 while($film = mysqli_fetch_assoc($res_all)): 
