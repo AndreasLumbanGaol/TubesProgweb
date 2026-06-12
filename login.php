@@ -1,6 +1,12 @@
 <?php
 include 'koneksi.php';
 session_start();
+
+// Redirect admin to admin dashboard if already logged in
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php");
+    exit();
+}
 $message = '';
 $alertClass = 'alert-danger';
 

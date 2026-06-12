@@ -4,6 +4,12 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 include 'koneksi.php'; // Menyambungkan ke database
 
+// Redirect admin to admin dashboard
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php");
+    exit();
+}
+
 // Set default location to Bandung if not set
 if (!isset($_SESSION['selected_location'])) {
     $_SESSION['selected_location'] = 'Bandung';

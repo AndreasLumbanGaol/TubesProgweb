@@ -1,6 +1,10 @@
 <?php
 session_start();
-include '../koneksi.php';
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: ../login.php");
+    exit();
+}
+include_once __DIR__ . '/../koneksi.php';
 $page = 'transaction';
 
 // Fetch stats dynamically from database
@@ -64,6 +68,7 @@ $query_trx = "SELECT
     t.TotalPrice, 
     t.TransDate, 
     t.PaymentStatus,
+    t.PaymentMethod,
     GROUP_CONCAT(DISTINCT th.Name SEPARATOR ', ') AS TheaterName,
     GROUP_CONCAT(tk.SeatInfo SEPARATOR ', ') AS Seats
 FROM `transaction` t
@@ -89,6 +94,7 @@ if ($res_trx) {
             'total' => 'Rp ' . number_format($row['TotalPrice'], 0, ',', '.'),
             'date' => date('Y-m-d', strtotime($row['TransDate'])),
             'status' => $row['PaymentStatus'],
+            'method' => $row['PaymentMethod'] ? $row['PaymentMethod'] : 'Tixly Wallet',
             'theater' => $row['TheaterName'],
             'seats' => $row['Seats']
         ];
@@ -101,7 +107,7 @@ if ($res_trx) {
 $search_rsl = isset($_GET['search_rsl']) ? mysqli_real_escape_string($conn, $_GET['search_rsl']) : '';
 $status_rsl = isset($_GET['status_rsl']) ? mysqli_real_escape_string($conn, $_GET['status_rsl']) : '';
 
-$where_rsl = " WHERE t.IsResale = 1 ";
+$where_rsl = " WHERE (t.IsResale = 1 OR (t.Status = 'terjual' AND t.SellerID IS NOT NULL)) ";
 if ($search_rsl !== '') {
     $where_rsl .= " AND (u.Nama LIKE '%$search_rsl%' OR m.Title LIKE '%$search_rsl%' OR t.TicketID LIKE '%$search_rsl%') ";
 }
@@ -245,8 +251,12 @@ if ($res_rsl) {
 </head>
 <body>
 
-    <nav class="navbar navbar-dark">
-        <a class="navbar-brand" href="index.php">Tixly<span>Cinema</span></a>
+    <nav class="navbar navbar-dark d-flex justify-content-between align-items-center">
+        <a class="navbar-brand" href="index.php">Tixly<span>Cinema</span> (Admin Panel)</a>
+        <div>
+            <span class="text-white-50 me-3">Hi, Admin!</span>
+            <a href="../logout.php" class="btn btn-outline-danger btn-sm" style="border-radius: 20px; font-weight: bold; padding: 5px 15px;">Logout</a>
+        </div>
     </nav>
 
     <div class="container-fluid">
@@ -318,6 +328,7 @@ if ($res_rsl) {
                                                 data-seats="<?php echo htmlspecialchars($trx['seats']); ?>"
                                                 data-total="<?php echo htmlspecialchars($trx['total']); ?>"
                                                 data-status="<?php echo htmlspecialchars(ucfirst($trx['status'])); ?>"
+                                                data-method="<?php echo htmlspecialchars($trx['method']); ?>"
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#detailModal">
                                             Detail
@@ -409,6 +420,7 @@ if ($res_rsl) {
                     <div class="detail-row"><span class="detail-label">Film</span><span class="detail-value" id="det-film">-</span></div>
                     <div class="detail-row"><span class="detail-label">Bioskop</span><span class="detail-value" id="det-theater">-</span></div>
                     <div class="detail-row"><span class="detail-label" id="det-label-seats">Kursi</span><span class="detail-value" id="det-seats">-</span></div>
+                    <div class="detail-row" id="det-row-method"><span class="detail-label">Metode Pembayaran</span><span class="detail-value" id="det-method">-</span></div>
                     <div class="detail-row"><span class="detail-label" id="det-label-total">Total Pembayaran</span><span class="detail-value" id="det-total" style="color: #d4af37;">-</span></div>
                     <div class="detail-row"><span class="detail-label">Status</span><span id="det-status" class="badge bg-success">Sukses</span></div>
                 </div>
@@ -429,8 +441,11 @@ if ($res_rsl) {
                 const seats = button.getAttribute('data-seats');
                 const total = button.getAttribute('data-total');
                 const status = button.getAttribute('data-status');
-
+                const method = button.getAttribute('data-method');
+ 
                 detailModal.querySelector('.modal-title').textContent = 'Detail Transaksi ' + id;
+                detailModal.querySelector('#det-row-method').style.display = 'flex';
+                detailModal.querySelector('#det-method').textContent = method;
                 detailModal.querySelector('#det-label-id').textContent = 'ID Transaksi';
                 detailModal.querySelector('#det-id').textContent = id;
                 
@@ -466,8 +481,9 @@ if ($res_rsl) {
                 const seat = button.getAttribute('data-seat');
                 const price = button.getAttribute('data-price');
                 const status = button.getAttribute('data-status');
-
+ 
                 detailModal.querySelector('.modal-title').textContent = 'Detail Resell ' + id;
+                detailModal.querySelector('#det-row-method').style.display = 'none';
                 
                 detailModal.querySelector('#det-label-id').textContent = 'ID Resell';
                 detailModal.querySelector('#det-id').textContent = id;

@@ -5,6 +5,12 @@ if (session_status() === PHP_SESSION_NONE) {
 
 include 'koneksi.php';
 
+// Redirect admin to admin dashboard
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php");
+    exit();
+}
+
 // Set default lokasi ke Bandung jika belum diatur
 if (!isset($_SESSION['selected_location'])) {
     $_SESSION['selected_location'] = 'Bandung';
@@ -91,24 +97,60 @@ if ($userId) {
     }
 }
 
-// Fetch tiket aktif secara dinamis dari Database
-$tickets = [];
+// Fetch Purchased Ticket History (Riwayat Pembelian)
+$purchase_history = [];
 if ($userId) {
-    $query_tickets = "SELECT t.*, st.StartTime, st.PlayDate, m.Title, m.Duration, m.Genre, m.Rating, m.PosterURL, s.Name as StudioName, th.Name as TheaterName 
+    $query_purchases = "SELECT t.*, st.StartTime, st.PlayDate, m.Title, m.Duration, m.Genre, m.Rating, m.PosterURL, s.Name as StudioName, th.Name as TheaterName 
                     FROM ticket t
                     JOIN transaction tr ON t.TransactionID = tr.TransactionID
                     JOIN showtime st ON t.ShowtimeID = st.ShowtimeID
                     JOIN movie m ON st.MovieID = m.MovieID
                     LEFT JOIN studio s ON t.StudioID = s.StudioID
                     LEFT JOIN theater th ON s.TheaterID = th.TheaterID
-                    WHERE tr.UserID = '$userId' AND t.Status = 'aktif'
+                    WHERE tr.UserID = '$userId'
                     ORDER BY tr.TransactionID DESC";
-    $result_tickets = mysqli_query($conn, $query_tickets);
-    if ($result_tickets && mysqli_num_rows($result_tickets) > 0) {
-        while ($row = mysqli_fetch_assoc($result_tickets)) {
+    $result_purchases = mysqli_query($conn, $query_purchases);
+    if ($result_purchases && mysqli_num_rows($result_purchases) > 0) {
+        while ($row = mysqli_fetch_assoc($result_purchases)) {
             if(empty($row['StudioName'])) $row['StudioName'] = 'Regular Class';
             if(empty($row['TheaterName'])) $row['TheaterName'] = 'Tixly Cinema Center';
-            $tickets[] = $row;
+            
+            // Calculate status dynamically: Selesai if PlayDate is in the past, otherwise check ticket status
+            if ($row['Status'] === 'terjual') {
+                $row['CalculatedStatus'] = 'Terjual';
+            } elseif ($row['IsResale'] == 1) {
+                $row['CalculatedStatus'] = 'Sedang Dijual';
+            } else {
+                $playdate = $row['PlayDate'];
+                $today = date('Y-m-d');
+                if ($playdate < $today) {
+                    $row['CalculatedStatus'] = 'Selesai';
+                } else {
+                    $row['CalculatedStatus'] = ($row['Status'] == 'aktif') ? 'Aktif' : ucfirst($row['Status']);
+                }
+            }
+            $purchase_history[] = $row;
+        }
+    }
+}
+
+// Fetch Resold Ticket History (Riwayat Penjualan)
+$sales_history = [];
+if ($userId) {
+    $query_sales = "SELECT t.*, m.Title, m.PosterURL, s.PlayDate, s.StartTime, st.Name as StudioName, th.Name as TheaterName
+                    FROM ticket t
+                    JOIN showtime s ON t.ShowtimeID = s.ShowtimeID
+                    JOIN movie m ON s.MovieID = m.MovieID
+                    LEFT JOIN studio st ON t.StudioID = st.StudioID
+                    LEFT JOIN theater th ON st.TheaterID = th.TheaterID
+                    WHERE t.SellerID = '$userId' AND (t.Status = 'terjual' OR t.IsResale = 1)
+                    ORDER BY t.TicketID DESC";
+    $result_sales = mysqli_query($conn, $query_sales);
+    if ($result_sales && mysqli_num_rows($result_sales) > 0) {
+        while ($row = mysqli_fetch_assoc($result_sales)) {
+            if(empty($row['StudioName'])) $row['StudioName'] = 'Regular Class';
+            if(empty($row['TheaterName'])) $row['TheaterName'] = 'Tixly Cinema Center';
+            $sales_history[] = $row;
         }
     }
 }
@@ -182,6 +224,13 @@ if ($userId) {
         .ticket-stub { width: 190px; border-left: 2px dashed rgba(212, 175, 55, 0.25); display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 24px 20px; text-align: center; }
         .stub-status-badge { background: rgba(46, 213, 115, 0.1); border: 1px solid rgba(46, 213, 115, 0.4); color: #2ed573; font-size: 10px; font-weight: 800; padding: 4px 14px; border-radius: 20px; }
         .stub-barcode-img { width: 100%; height: 38px; object-fit: stretch; background: #fff; padding: 2px; }
+
+        /* History Tabs Styles */
+        .history-tabs { display: flex; gap: 15px; border-bottom: 2px solid rgba(212, 175, 55, 0.15); margin-bottom: 25px; padding-bottom: 10px; }
+        .history-tab-btn { background: transparent; border: none; color: #888; font-size: 16px; font-weight: 700; padding: 8px 16px; cursor: pointer; transition: all 0.3s ease; position: relative; }
+        .history-tab-btn:hover { color: #fff; }
+        .history-tab-btn.active { color: #d4af37; }
+        .history-tab-btn.active::after { content: ''; position: absolute; bottom: -12px; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #d4af37 0%, #b30000 100%); border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -239,56 +288,110 @@ if ($userId) {
                         <div class="text-white-50 small mt-1">Saldo Tersedia untuk Pembelian Tiket</div>
                     </div>
 
-                    <div class="section-headline">Tiket Aktif Anda</div>
+                    <div class="section-headline">Riwayat Tiket</div>
+                    
+                    <div class="history-tabs">
+                        <button class="history-tab-btn active" id="pembelian-tab-btn" onclick="showTab('pembelian')">Riwayat Pembelian</button>
+                        <button class="history-tab-btn" id="penjualan-tab-btn" onclick="showTab('penjualan')">Riwayat Penjualan</button>
+                    </div>
 
-                    <?php if(empty($tickets)): ?>
-                        <div class="alert text-center py-4 text-white-50" style="background: rgba(255,255,255,0.02); border: 1px dashed #3a2626; border-radius: 12px;">
-                            Anda tidak memiliki tiket aktif saat ini. Selesaikan pemesanan film untuk memunculkan tiket di sini.
-                        </div>
-                    <?php else: ?>
-                        <?php foreach ($tickets as $ticket): ?>
-                            <div class="ticket-box">
-                                <div class="ticket-main">
-                                    <div class="ticket-poster-container">
-                                        <img src="<?php echo htmlspecialchars($ticket['PosterURL']); ?>" alt="Poster" class="ticket-poster">
-                                    </div>
-                                    <div class="ticket-content">
-                                        <h3 class="ticket-movie-title"><?php echo htmlspecialchars($ticket['Title']); ?></h3>
-                                        <div class="text-warning small">★ <?php echo htmlspecialchars($ticket['Rating']); ?> | <?php echo htmlspecialchars($ticket['Genre']); ?></div>
-                                        
-                                        <div class="ticket-meta-grid">
-                                            <div>
-                                                <div class="meta-cell-label">Bioskop / Studio</div>
-                                                <div class="meta-cell-value"><?php echo htmlspecialchars($ticket['TheaterName']); ?></div>
-                                                <div class="meta-cell-value text-warning"><?php echo htmlspecialchars($ticket['StudioName']); ?></div>
-                                            </div>
-                                            <div>
-                                                <div class="meta-cell-label">Waktu Tayang</div>
-                                                <div class="meta-cell-value"><?php echo date('d M Y', strtotime($ticket['PlayDate'])); ?></div>
-                                                <div class="meta-cell-value"><?php echo date('H:i', strtotime($ticket['StartTime'])); ?> WIB</div>
-                                            </div>
-                                            <div>
-                                                <div class="meta-cell-label">Kursi</div>
-                                                <div class="meta-cell-value text-warning"><?php echo htmlspecialchars($ticket['SeatInfo']); ?></div>
-                                            </div>
-                                            <div>
-                                                <div class="meta-cell-label">Durasi</div>
-                                                <div class="meta-cell-value"><?php echo htmlspecialchars($ticket['Duration']); ?> Menit</div>
+                    <!-- Purchases History Content -->
+                    <div id="pembelian-tab-content" class="history-tab-content">
+                        <?php if(empty($purchase_history)): ?>
+                            <div class="alert text-center py-4 text-white-50" style="background: rgba(255,255,255,0.02); border: 1px dashed #3a2626; border-radius: 12px;">
+                                Anda belum memiliki riwayat pembelian tiket film.
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($purchase_history as $ticket): 
+                                $isCompleted = ($ticket['CalculatedStatus'] === 'Selesai' || $ticket['CalculatedStatus'] === 'Terjual');
+                                if ($ticket['CalculatedStatus'] === 'Terjual') {
+                                    $badgeClass = 'bg-danger text-white border-0';
+                                } elseif ($ticket['CalculatedStatus'] === 'Sedang Dijual') {
+                                    $badgeClass = 'bg-warning text-dark border-0';
+                                } else {
+                                    $badgeClass = $isCompleted ? 'bg-secondary text-white border-0' : '';
+                                }
+                                $barcodeStyle = $isCompleted ? 'opacity: 0.3; filter: grayscale(1);' : '';
+                                $statusLabel = $ticket['CalculatedStatus'];
+                            ?>
+                                <div class="ticket-box" style="<?php echo $isCompleted ? 'border-color: rgba(255,255,255,0.08);' : ''; ?>">
+                                    <div class="ticket-main">
+                                        <div class="ticket-poster-container">
+                                            <img src="<?php echo htmlspecialchars($ticket['PosterURL']); ?>" alt="Poster" class="ticket-poster" style="<?php echo $isCompleted ? 'filter: grayscale(0.5); opacity: 0.6;' : ''; ?>">
+                                        </div>
+                                        <div class="ticket-content">
+                                            <h3 class="ticket-movie-title" style="<?php echo $isCompleted ? 'color: #888;' : ''; ?>"><?php echo htmlspecialchars($ticket['Title']); ?></h3>
+                                            <div class="text-warning small">★ <?php echo htmlspecialchars($ticket['Rating']); ?> | <?php echo htmlspecialchars($ticket['Genre']); ?></div>
+                                            
+                                            <div class="ticket-meta-grid">
+                                                <div>
+                                                    <div class="meta-cell-label">Bioskop / Studio</div>
+                                                    <div class="meta-cell-value" style="<?php echo $isCompleted ? 'color: #777;' : ''; ?>"><?php echo htmlspecialchars($ticket['TheaterName']); ?></div>
+                                                    <div class="meta-cell-value text-warning" style="<?php echo $isCompleted ? 'color: rgba(212,175,55,0.4) !important;' : ''; ?>"><?php echo htmlspecialchars($ticket['StudioName']); ?></div>
+                                                </div>
+                                                <div>
+                                                    <div class="meta-cell-label">Waktu Tayang</div>
+                                                    <div class="meta-cell-value" style="<?php echo $isCompleted ? 'color: #777;' : ''; ?>"><?php echo date('d M Y', strtotime($ticket['PlayDate'])); ?></div>
+                                                    <div class="meta-cell-value" style="<?php echo $isCompleted ? 'color: #777;' : ''; ?>"><?php echo date('H:i', strtotime($ticket['StartTime'])); ?> WIB</div>
+                                                </div>
+                                                <div>
+                                                    <div class="meta-cell-label">Kursi</div>
+                                                    <div class="meta-cell-value text-warning" style="<?php echo $isCompleted ? 'color: rgba(212,175,55,0.4) !important;' : ''; ?>"><?php echo htmlspecialchars($ticket['SeatInfo']); ?></div>
+                                                </div>
+                                                <div>
+                                                    <div class="meta-cell-label">Durasi</div>
+                                                    <div class="meta-cell-value" style="<?php echo $isCompleted ? 'color: #777;' : ''; ?>"><?php echo htmlspecialchars($ticket['Duration']); ?> Menit</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="ticket-stub">
-                                    <div style="font-family: serif; font-weight:800; color:#d4af37;">Tixly<span>Cinema</span></div>
-                                    <span class="stub-status-badge">Tiket Aktif</span>
-                                    <div style="width:100%;">
-                                        <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TX-<?php echo $ticket['TicketID']; ?>&scale=2&rotate=N&includeheader=false" alt="Barcode" class="stub-barcode-img" style="background: #ffffff; padding: 4px; object-fit: contain;">
-                                        <span class="small monospace d-block text-dark bg-white">TX-<?php echo $ticket['TicketID']; ?></span>
+                                    <div class="ticket-stub" style="<?php echo $isCompleted ? 'border-left-color: rgba(255,255,255,0.08);' : ''; ?>">
+                                        <div style="font-family: serif; font-weight:800; color:<?php echo $isCompleted ? '#666' : '#d4af37'; ?>;">Tixly<span>Cinema</span></div>
+                                        <span class="stub-status-badge <?php echo $badgeClass; ?>"><?php echo ($statusLabel === 'Aktif') ? 'Tiket Aktif' : $statusLabel; ?></span>
+                                        <div style="width:100%;">
+                                            <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TX-<?php echo $ticket['TicketID']; ?>&scale=2&rotate=N&includeheader=false" alt="Barcode" class="stub-barcode-img" style="background: #ffffff; padding: 4px; object-fit: contain; <?php echo $barcodeStyle; ?>">
+                                            <span class="small monospace d-block text-dark bg-white" style="<?php echo $barcodeStyle; ?>">TX-<?php echo $ticket['TicketID']; ?></span>
+                                        </div>
                                     </div>
                                 </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Sales History Content -->
+                    <div id="penjualan-tab-content" class="history-tab-content" style="display: none;">
+                        <?php if(empty($sales_history)): ?>
+                            <div class="alert text-center py-4 text-white-50" style="background: rgba(255,255,255,0.02); border: 1px dashed #3a2626; border-radius: 12px;">
+                                Anda belum pernah menjual tiket di pasar resell.
                             </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                        <?php else: ?>
+                            <?php foreach ($sales_history as $sale): 
+                                $isSold = ($sale['IsResale'] == 0);
+                                $statusBadge = $isSold ? '<span class="badge bg-success text-white px-3 py-2 rounded-pill">Terjual</span>' : '<span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Pending</span>';
+                                $priceDisplay = $sale['SecondPrice'] ? $sale['SecondPrice'] : $sale['FirstPrice'];
+                            ?>
+                                <div class="resell-history-item p-3 mb-3 d-flex align-items-center justify-content-between" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(212,175,55,0.15); border-radius: 16px;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="<?php echo htmlspecialchars($sale['PosterURL']); ?>" alt="Poster" style="width: 50px; height: 70px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(212,175,55,0.3);">
+                                        <div>
+                                            <h5 class="text-white mb-1" style="font-size: 16px; font-weight: 700;"><?php echo htmlspecialchars($sale['Title']); ?></h5>
+                                            <span class="small text-white-50 d-block">Bioskop: <strong><?php echo htmlspecialchars($sale['TheaterName']); ?> (<?php echo htmlspecialchars($sale['StudioName']); ?>)</strong></span>
+                                            <span class="small text-white-50 d-block">Kursi: <strong class="text-warning"><?php echo htmlspecialchars($sale['SeatInfo']); ?></strong> | Jadwal: <?php echo date('d M Y', strtotime($sale['PlayDate'])); ?> - <?php echo date('H:i', strtotime($sale['StartTime'])); ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="text-end d-flex flex-column align-items-end gap-2">
+                                        <div>
+                                            <span class="small text-muted d-block" style="font-size: 10px;">HARGA JUAL</span>
+                                            <strong class="text-warning" style="font-size: 16px;">Rp <?php echo number_format($priceDisplay, 0, ',', '.'); ?></strong>
+                                        </div>
+                                        <div>
+                                            <?php echo $statusBadge; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
 
                 </div>
             </div>
@@ -347,6 +450,18 @@ if ($userId) {
                 });
             }
         });
+
+        function showTab(tabName) {
+            document.querySelectorAll('.history-tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.querySelectorAll('.history-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabName + '-tab-content').style.display = 'block';
+            document.getElementById(tabName + '-tab-btn').classList.add('active');
+        }
     </script>
 </body>
 </html>

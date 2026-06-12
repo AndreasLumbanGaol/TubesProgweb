@@ -1,6 +1,6 @@
 <?php
 // api_jadwal.php
-include '../koneksi.php';
+include_once __DIR__ . '/../koneksi.php';
 header('Content-Type: application/json');
 
 $movie = mysqli_real_escape_string($conn, $_GET['movie'] ?? '');

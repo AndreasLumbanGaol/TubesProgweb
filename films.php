@@ -3,6 +3,12 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 include 'koneksi.php';
+ 
+// Redirect admin to admin dashboard
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php");
+    exit();
+}
 
 if (!isset($_SESSION['selected_location'])) {
     $_SESSION['selected_location'] = 'Bandung';

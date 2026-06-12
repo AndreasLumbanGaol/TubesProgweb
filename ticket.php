@@ -4,6 +4,12 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 include 'koneksi.php'; // Menyambungkan ke database
 
+// Redirect admin to admin dashboard
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php");
+    exit();
+}
+
 // Ambil parameter dari URL (GET) yang dikirim dari payment.php
 $movie = isset($_GET['movie']) ? $_GET['movie'] : 'Wonka';
 $poster = isset($_GET['poster']) ? $_GET['poster'] : 'https://image.tmdb.org/t/p/w200/qhb1qOilapbapxWQn9jtRCMwXJF.jpg';
@@ -92,36 +98,52 @@ if($userId) {
             if ($resell_ticket_id > 0) {
                 // ALUR A: PEMBELIAN RESELL
                 
-                // Cari ID Penjual dan Harga Jual (SecondPrice) dari tiket sebelum ditransfer kepemilikannya
+                // Cari ID Penjual, Harga Jual, dan info kursi tiket dari tiket sebelum kepemilikan diproses
                 $query_seller = mysqli_query($conn, "
-                    SELECT tr.UserID AS SellerID, tk.SecondPrice 
+                    SELECT tr.UserID AS SellerID, tk.SecondPrice, tk.ShowtimeID, tk.StudioID, tk.SeatInfo 
                     FROM ticket tk
                     JOIN `transaction` tr ON tk.TransactionID = tr.TransactionID
                     WHERE tk.TicketID = $resell_ticket_id
                     LIMIT 1
                 ");
                 
+                $seller_id = 0;
+                $resell_price = 0;
+                $showtime_id = 0;
+                $studio_id = 0;
+                $seat_info = '';
+
                 if ($query_seller && mysqli_num_rows($query_seller) > 0) {
                     $row_seller = mysqli_fetch_assoc($query_seller);
                     $seller_id = intval($row_seller['SellerID']);
                     $resell_price = intval($row_seller['SecondPrice']);
-                    
-                    if ($seller_id > 0 && $resell_price > 0) {
-                        // Tambahkan uang penjualan tiket ke Saldo penjual
-                        mysqli_query($conn, "UPDATE user SET Saldo = Saldo + $resell_price WHERE UserID = $seller_id");
-                    }
+                    $showtime_id = intval($row_seller['ShowtimeID']);
+                    $studio_id = intval($row_seller['StudioID']);
+                    $seat_info = $row_seller['SeatInfo'];
                 }
 
-                $insertTrx = mysqli_query($conn, "INSERT INTO `transaction` (TotalPrice, PaymentStatus, UserID) VALUES ($total, 'sukses', $userId)");
+                $insertTrx = mysqli_query($conn, "INSERT INTO `transaction` (TotalPrice, PaymentStatus, UserID, PaymentMethod) VALUES ($total, 'sukses', $userId, '" . mysqli_real_escape_string($conn, $method) . "')");
                 $transactionId = mysqli_insert_id($conn);
                 
                 if($transactionId) {
-                    $query_transfer = "UPDATE ticket SET TransactionID = $transactionId, IsResale = 0, SecondPrice = NULL WHERE TicketID = $resell_ticket_id";
-                    mysqli_query($conn, $query_transfer);
+                    // 1. Buat tiket baru untuk pembeli
+                    $seat_info_escaped = mysqli_real_escape_string($conn, $seat_info);
+                    $query_new_ticket = "INSERT INTO ticket (FirstPrice, Status, IsResale, TransactionID, ShowtimeID, StudioID, SeatInfo, SellerID) 
+                                         VALUES ($resell_price, 'aktif', 0, $transactionId, $showtime_id, $studio_id, '$seat_info_escaped', $seller_id)";
+                    mysqli_query($conn, $query_new_ticket);
+                    
+                    // 2. Ubah status tiket penjual menjadi 'terjual' dan nonaktifkan IsResale
+                    $query_update_seller_ticket = "UPDATE ticket SET Status = 'terjual', IsResale = 0 WHERE TicketID = $resell_ticket_id";
+                    mysqli_query($conn, $query_update_seller_ticket);
+                    
+                    // 3. Tambahkan uang penjualan tiket ke Saldo penjual
+                    if ($seller_id > 0 && $resell_price > 0) {
+                        mysqli_query($conn, "UPDATE user SET Saldo = Saldo + $resell_price WHERE UserID = $seller_id");
+                    }
                 }
             } else {
                 // ALUR B: PEMBELIAN BARU DARI HOME / FILMS
-                $insertTrx = mysqli_query($conn, "INSERT INTO `transaction` (TotalPrice, PaymentStatus, UserID) VALUES ($total, 'sukses', $userId)");
+                $insertTrx = mysqli_query($conn, "INSERT INTO `transaction` (TotalPrice, PaymentStatus, UserID, PaymentMethod) VALUES ($total, 'sukses', $userId, '" . mysqli_real_escape_string($conn, $method) . "')");
                 $transactionId = mysqli_insert_id($conn);
                 
                 if($transactionId && $seat_count > 0) {

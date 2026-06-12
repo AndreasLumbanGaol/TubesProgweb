@@ -4,6 +4,12 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 include 'koneksi.php'; // Menyambungkan ke database
 
+// Redirect admin to admin dashboard
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php");
+    exit();
+}
+
 // SINKRONISASI SESSION: Menyesuaikan dengan login.php yang menyimpan $_SESSION['user_id']
 $isLoggedIn = isset($_SESSION['user_id']);
 $user_id = null;
@@ -25,6 +31,8 @@ if (isset($_GET['pesan'])) {
         $msg_error = "Terjadi kesalahan sistem saat memproses tiket.";
     } elseif ($_GET['pesan'] === 'akses_ditolak') {
         $msg_error = "Akses ditolak! Ini bukan tiket Anda.";
+    } elseif ($_GET['pesan'] === 'h_minus_1_error') {
+        $msg_error = "Gagal menjual! Tiket hanya dapat dijual kembali maksimal H-1 sebelum hari tayang.";
     }
 }
 
@@ -43,8 +51,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $isLogge
     if (mysqli_num_rows($hasil_cek) > 0) {
         if ($_POST['action'] == 'jual_tiket') {
             $second_price = mysqli_real_escape_string($conn, $_POST['second_price']);
+            
+            // Validasi H-1 sebelum hari tayang
+            $query_showtime = "SELECT s.PlayDate FROM ticket t 
+                               JOIN showtime s ON t.ShowtimeID = s.ShowtimeID 
+                               WHERE t.TicketID = '$ticket_id_target' LIMIT 1";
+            $res_showtime = mysqli_query($conn, $query_showtime);
+            if ($res_showtime && mysqli_num_rows($res_showtime) > 0) {
+                $row_showtime = mysqli_fetch_assoc($res_showtime);
+                $playdate = $row_showtime['PlayDate'];
+                $today = date('Y-m-d');
+                $tomorrow = date('Y-m-d', strtotime('+1 day'));
+                
+                if ($playdate < $tomorrow) {
+                    header("Location: resell.php?pesan=h_minus_1_error");
+                    exit;
+                }
+            }
             // Aksi Jual: IsResale menjadi 1 (true)
-            $query_action = "UPDATE ticket SET IsResale = 1, SecondPrice = '$second_price' WHERE TicketID = '$ticket_id_target'";
+            $query_action = "UPDATE ticket SET IsResale = 1, SecondPrice = '$second_price', SellerID = '$user_id' WHERE TicketID = '$ticket_id_target'";
             if (mysqli_query($conn, $query_action)) {
                 // Post/Redirect/Get Pattern: Alihkan halaman agar form bersih kembali
                 header("Location: resell.php?pesan=sukses_jual");
@@ -55,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $isLogge
             }
         } elseif ($_POST['action'] == 'batal_jual') {
             // Aksi Batal Jual: IsResale kembali menjadi 0 (false)
-            $query_action = "UPDATE ticket SET IsResale = 0, SecondPrice = NULL WHERE TicketID = '$ticket_id_target'";
+            $query_action = "UPDATE ticket SET IsResale = 0, SecondPrice = NULL, SellerID = NULL WHERE TicketID = '$ticket_id_target'";
             if (mysqli_query($conn, $query_action)) {
                 header("Location: resell.php?pesan=sukses_batal");
                 exit;
@@ -275,6 +300,11 @@ if (isset($_GET['set_location'])) {
                             if ($res_mytickets && mysqli_num_rows($res_mytickets) > 0) {
                                 while ($myticket = mysqli_fetch_assoc($res_mytickets)) {
                                     $potongan = $myticket['FirstPrice'] - ($myticket['FirstPrice'] * 0.10);
+                                    
+                                    // Pengecekan H-1 sebelum hari tayang
+                                    $playdate = $myticket['PlayDate'];
+                                    $tomorrow = date('Y-m-d', strtotime('+1 day'));
+                                    $is_resellable = ($playdate >= $tomorrow);
                         ?>
                                     <form action="resell.php" method="POST" class="m-0">
                                         <?php if($myticket['IsResale'] == 0): ?>
@@ -303,7 +333,11 @@ if (isset($_GET['set_location'])) {
                                                 <div class="modal-price-calc">Asli: Rp <?php echo number_format($myticket['FirstPrice'], 0, ',', '.'); ?></div>
                                                 
                                                 <?php if($myticket['IsResale'] == 0): ?>
-                                                    <button type="submit" class="btn btn-sm btn-outline-warning mt-2 px-3" style="font-size: 11px; font-weight: bold; border-radius: 6px;">Jual Sekarang</button>
+                                                    <?php if($is_resellable): ?>
+                                                        <button type="submit" class="btn btn-sm btn-outline-warning mt-2 px-3" style="font-size: 11px; font-weight: bold; border-radius: 6px;">Jual Sekarang</button>
+                                                    <?php else: ?>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2 px-3" disabled style="font-size: 11px; font-weight: bold; border-radius: 6px;" title="Tiket hanya dapat dijual kembali maksimal H-1 sebelum hari tayang">H-1 Lewat</button>
+                                                    <?php endif; ?>
                                                 <?php else: ?>
                                                     <button type="submit" class="btn btn-sm btn-outline-danger mt-2 px-3" style="font-size: 11px; font-weight: bold; border-radius: 6px;">Batal Jual</button>
                                                 <?php endif; ?>

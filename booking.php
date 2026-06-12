@@ -4,6 +4,12 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 include 'koneksi.php';
 
+// Redirect admin to admin dashboard
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php");
+    exit();
+}
+
 $movie = isset($_GET['movie']) ? $_GET['movie'] : 'Wonka';
 $poster = isset($_GET['poster']) ? $_GET['poster'] : 'https://image.tmdb.org/t/p/w200/qhb1qOilapbapxWQn9jtRCMwXJF.jpg';
 $duration = isset($_GET['duration']) ? $_GET['duration'] : '1h 56m';

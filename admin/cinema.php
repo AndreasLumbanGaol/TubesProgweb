@@ -1,6 +1,10 @@
 <?php
 session_start();
-include '../koneksi.php';
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: ../login.php");
+    exit();
+}
+include_once __DIR__ . '/../koneksi.php';
 $page = 'cinema';
 
 $genres = ['Aksi', 'Drama', 'Komedi', 'Horror', 'Romantis', 'Sci-Fi', 'Animasi', 'Thriller'];
@@ -407,8 +411,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
-    <nav class="navbar navbar-dark">
-        <a class="navbar-brand" href="index.php">Tixly<span>Cinema</span></a>
+    <nav class="navbar navbar-dark d-flex justify-content-between align-items-center">
+        <a class="navbar-brand" href="index.php">Tixly<span>Cinema</span> (Admin Panel)</a>
+        <div>
+            <span class="text-white-50 me-3">Hi, Admin!</span>
+            <a href="../logout.php" class="btn btn-outline-danger btn-sm" style="border-radius: 20px; font-weight: bold; padding: 5px 15px;">Logout</a>
+        </div>
     </nav>
 
     <div class="container-fluid">

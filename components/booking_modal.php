@@ -63,11 +63,16 @@ if ($studio_types_query) {
     
     .form-section-title { color: #d4af37; font-weight: 700; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
     .form-section-title::after { content: ''; flex-grow: 1; height: 1px; background: linear-gradient(90deg, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0) 100%); }
-
+ 
     .btn-cancel-custom { background-color: transparent; border: 1px solid rgba(255, 255, 255, 0.15); color: #aaa; padding: 10px 24px; border-radius: 30px; font-weight: bold; transition: all 0.3s; }
     .btn-cancel-custom:hover { background-color: rgba(255, 255, 255, 0.05); color: #fff; border-color: rgba(255, 255, 255, 0.3); }
     .btn-confirm-custom { background: linear-gradient(135deg, #d4af37 0%, #b8962e 100%); color: #000; border: none; padding: 10px 32px; border-radius: 30px; font-weight: 800; transition: all 0.3s; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2); float: right; }
     .btn-confirm-custom:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); background: linear-gradient(135deg, #f3ca44 0%, #d4af37 100%); }
+
+    .selection-grid-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+    .btn-grid-option { background-color: #241414; border: 1px solid #4a2d2d; color: #ccc; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-align: center; min-width: 90px; }
+    .btn-grid-option:hover { background-color: #381f1f; border-color: #d4af37; color: #fff; }
+    .btn-grid-option.active { background: linear-gradient(135deg, #b30000 0%, #7e0000 100%); border-color: #d4af37 !important; color: #fff !important; box-shadow: 0 0 10px rgba(179, 0, 0, 0.4); }
 </style>
 
 <div class="modal fade tixly-modal" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
@@ -157,13 +162,16 @@ if ($studio_types_query) {
                     </div>
 
                     <div class="mb-4">
-                        <div class="form-section-title">Jadwal Tersedia</div>
-                        <div class="row g-3">
-                            <div class="col-md-8">
-                                <select class="form-select custom-form-select" id="booking_jadwal" name="booking_jadwal" required>
-                                    <option value="">Mencari Jadwal...</option>
-                                </select>
-                            </div>
+                        <div class="form-section-title">Pilih Tanggal</div>
+                        <div class="selection-grid-container" id="date-options-container">
+                            <span class="text-muted fs-7">Pilih bioskop dan studio terlebih dahulu...</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-section-title">Pilih Jam Tayang</div>
+                        <div class="selection-grid-container" id="time-options-container">
+                            <span class="text-muted fs-7">Pilih tanggal terlebih dahulu...</span>
                         </div>
                     </div>
                 </form>
@@ -184,40 +192,112 @@ if ($studio_types_query) {
         "Tixly": { "Regular": 40000, "Velvet": 100000, "Gold Class": 130000 }
     };
 
+    let allSchedules = [];
+    let selectedDateLabel = null;
+    let selectedTime = null;
+    let selectedScheduleItem = null;
+
     function fetchJadwal() {
         const movieTitle = document.getElementById('modal-movie-title').textContent;
         const checkedCinema = document.querySelector('input[name="cinema"]:checked');
         const checkedStudio = document.querySelector('input[name="studio_type"]:checked');
-        const dropdownJadwal = document.getElementById('booking_jadwal');
+        const dateContainer = document.getElementById('date-options-container');
+        const timeContainer = document.getElementById('time-options-container');
+
+        // Reset
+        allSchedules = [];
+        selectedDateLabel = null;
+        selectedTime = null;
+        selectedScheduleItem = null;
+        dateContainer.innerHTML = '<span class="text-muted fs-7">Mencari Jadwal...</span>';
+        timeContainer.innerHTML = '<span class="text-muted fs-7">Pilih tanggal terlebih dahulu...</span>';
 
         if (!checkedCinema || !checkedStudio) {
-            dropdownJadwal.innerHTML = '<option value="">Pilih bioskop dan studio terlebih dahulu</option>';
+            dateContainer.innerHTML = '<span class="text-muted fs-7">Pilih bioskop dan studio terlebih dahulu</span>';
             return;
         }
 
         const selectedCinema = checkedCinema.value;
         const selectedStudio = checkedStudio.value;
 
-        dropdownJadwal.innerHTML = '<option value="">Mencari Jadwal...</option>';
-
         fetch(`api/api_jadwal.php?movie=${encodeURIComponent(movieTitle)}&cinema=${encodeURIComponent(selectedCinema)}&type=${encodeURIComponent(selectedStudio)}`)
             .then(response => response.json())
             .then(data => {
-                dropdownJadwal.innerHTML = ''; 
+                dateContainer.innerHTML = ''; 
                 if(data.length > 0) {
-                    data.forEach(jadwal => {
-                        const option = document.createElement('option');
-                        option.value = jadwal.raw_date + '|' + jadwal.raw_time; 
-                        option.textContent = `${jadwal.date_label} - ${jadwal.time}`;
-                        dropdownJadwal.appendChild(option);
+                    allSchedules = data;
+                    
+                    // Extract unique dates
+                    const uniqueDates = [];
+                    const seenDates = new Set();
+                    
+                    data.forEach(item => {
+                        if (!seenDates.has(item.date_label)) {
+                            seenDates.add(item.date_label);
+                            uniqueDates.push({
+                                label: item.date_label,
+                                raw_date: item.raw_date
+                            });
+                        }
+                    });
+                    
+                    uniqueDates.forEach(dateObj => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn-grid-option';
+                        btn.textContent = dateObj.label;
+                        btn.onclick = () => selectDate(dateObj.label, btn);
+                        dateContainer.appendChild(btn);
                     });
                 } else {
-                    dropdownJadwal.innerHTML = '<option value="">Jadwal tidak tersedia</option>';
+                    dateContainer.innerHTML = '<span class="text-muted fs-7">Jadwal tidak tersedia</span>';
                 }
             })
             .catch(error => {
-                dropdownJadwal.innerHTML = '<option value="">Gagal memuat jadwal</option>';
+                dateContainer.innerHTML = '<span class="text-muted fs-7">Gagal memuat jadwal</span>';
             });
+    }
+
+    function selectDate(dateLabel, btnElement) {
+        selectedDateLabel = dateLabel;
+        selectedTime = null;
+        selectedScheduleItem = null;
+        
+        // Remove active class from other date buttons
+        document.querySelectorAll('#date-options-container .btn-grid-option').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        btnElement.classList.add('active');
+        
+        // Populate times for the selected date
+        const timeContainer = document.getElementById('time-options-container');
+        timeContainer.innerHTML = '';
+        
+        const filteredTimes = allSchedules.filter(j => j.date_label === dateLabel);
+        
+        if (filteredTimes.length > 0) {
+            filteredTimes.forEach(j => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn-grid-option';
+                btn.textContent = j.time;
+                btn.onclick = () => selectTime(j, btn);
+                timeContainer.appendChild(btn);
+            });
+        } else {
+            timeContainer.innerHTML = '<span class="text-muted fs-7">Jam tayang tidak tersedia</span>';
+        }
+    }
+
+    function selectTime(scheduleObj, btnElement) {
+        selectedScheduleItem = scheduleObj;
+        selectedTime = scheduleObj.time;
+        
+        // Remove active class from other time buttons
+        document.querySelectorAll('#time-options-container .btn-grid-option').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        btnElement.classList.add('active');
     }
 
     function updateStudioPrices() {
@@ -307,15 +387,12 @@ if ($studio_types_query) {
             confirmBtn.addEventListener('click', function() {
                 const checkedCinema = document.querySelector('input[name="cinema"]:checked');
                 const checkedStudio = document.querySelector('input[name="studio_type"]:checked');
-                const rawJadwal = document.getElementById('booking_jadwal').value;
                 
-                if(!checkedCinema || !checkedStudio || !rawJadwal) {
-                    alert("Maaf, jadwal belum tersedia untuk bioskop atau studio ini. Silakan pilih opsi lain.");
+                if(!checkedCinema || !checkedStudio || !selectedDateLabel || !selectedTime || !selectedScheduleItem) {
+                    alert("Maaf, silakan pilih bioskop, studio, tanggal, dan jam tayang terlebih dahulu.");
                     return;
                 }
 
-                const splitJadwal = rawJadwal.split('|');
-                
                 const queryParams = new URLSearchParams({
                     movie: document.getElementById('modal-movie-title').textContent,
                     poster: document.getElementById('hidden-movie-poster').value,
@@ -323,8 +400,8 @@ if ($studio_types_query) {
                     cinema: checkedCinema.value,
                     type: checkedStudio.value,
                     price: checkedStudio.getAttribute('data-price'),
-                    date: splitJadwal[0],
-                    time: splitJadwal[1]
+                    date: selectedScheduleItem.raw_date,
+                    time: selectedScheduleItem.raw_time
                 });
 
                 window.location.href = 'booking.php?' + queryParams.toString();
