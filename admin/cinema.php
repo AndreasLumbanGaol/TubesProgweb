@@ -10,12 +10,21 @@ $page = 'cinema';
 $genres = ['Aksi', 'Drama', 'Komedi', 'Horror', 'Romantis', 'Sci-Fi', 'Animasi', 'Thriller'];
 $jadwalOptions = ['07.00 - 09.00', '10.00 - 12.00', '13.00 - 15.00', '16.00 - 18.00', '19.00 - 21.00'];
 
-// Fetch all available theaters
+// Fetch all available theaters (Only allow Tixly Central, CGV Paskal 23, and XXI Botanica Mall)
 $theaters = [];
-$theaters_query = mysqli_query($conn, "SELECT * FROM theater ORDER BY Name ASC");
+$theaters_query = mysqli_query($conn, "SELECT * FROM theater WHERE TheaterID IN (1, 2, 3) ORDER BY Name ASC");
 if ($theaters_query) {
     while ($row = mysqli_fetch_assoc($theaters_query)) {
         $theaters[] = $row;
+    }
+}
+
+// Fetch theater to studio mappings
+$theater_studios = [];
+$studio_types_query = mysqli_query($conn, "SELECT DISTINCT TheaterID, Type FROM studio");
+if ($studio_types_query) {
+    while ($row = mysqli_fetch_assoc($studio_types_query)) {
+        $theater_studios[$row['TheaterID']][] = $row['Type'];
     }
 }
 
@@ -67,122 +76,126 @@ if ($edit_id > 0) {
 // Handle Form Submission
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $post_edit_id = intval($_POST['edit_id'] ?? 0);
-    $judul = mysqli_real_escape_string($conn, $_POST['judul'] ?? '');
-    $genre = mysqli_real_escape_string($conn, $_POST['genre'] ?? '');
-    $posterUrl = mysqli_real_escape_string($conn, $_POST['poster_url'] ?? '');
-    $duration = intval($_POST['duration'] ?? 120);
-    $rating = floatval($_POST['rating'] ?? 0.0);
-    
-    $schedules = $_POST['schedules'] ?? [];
+    try {
+        $post_edit_id = intval($_POST['edit_id'] ?? 0);
+        $judul = mysqli_real_escape_string($conn, $_POST['judul'] ?? '');
+        $genre = mysqli_real_escape_string($conn, $_POST['genre'] ?? '');
+        $posterUrl = mysqli_real_escape_string($conn, $_POST['poster_url'] ?? '');
+        $duration = intval($_POST['duration'] ?? 120);
+        $rating = floatval($_POST['rating'] ?? 0.0);
+        
+        $schedules = $_POST['schedules'] ?? [];
 
-    if (!empty($judul) && !empty($genre) && !empty($posterUrl)) {
-        if ($post_edit_id > 0) {
-            // Update Movie
-            $updateMovie = mysqli_query($conn, "UPDATE movie SET Title = '$judul', Duration = $duration, Genre = '$genre', Rating = $rating, PosterURL = '$posterUrl' WHERE MovieID = $post_edit_id");
-            if ($updateMovie) {
-                $movie_id = $post_edit_id;
-                
-                // Clear old showtimes
-                mysqli_query($conn, "DELETE FROM showtime WHERE MovieID = $movie_id");
-                
-                $showtimes_inserted = 0;
-                // Insert new schedules
-                foreach ($schedules as $sched) {
-                    $selected_theater_id = intval($sched['theater_id'] ?? 0);
-                    $selected_studio_type = mysqli_real_escape_string($conn, $sched['studio_type'] ?? '');
-                    $play_date = mysqli_real_escape_string($conn, $sched['play_date'] ?? '');
-                    $selected_times = $sched['times'] ?? [];
+        if (!empty($judul) && !empty($genre) && !empty($posterUrl)) {
+            if ($post_edit_id > 0) {
+                // Update Movie
+                $updateMovie = mysqli_query($conn, "UPDATE movie SET Title = '$judul', Duration = $duration, Genre = '$genre', Rating = $rating, PosterURL = '$posterUrl' WHERE MovieID = $post_edit_id");
+                if ($updateMovie) {
+                    $movie_id = $post_edit_id;
+                    
+                    // Clear old showtimes
+                    mysqli_query($conn, "DELETE FROM showtime WHERE MovieID = $movie_id");
+                    
+                    $showtimes_inserted = 0;
+                    // Insert new schedules
+                    foreach ($schedules as $sched) {
+                        $selected_theater_id = intval($sched['theater_id'] ?? 0);
+                        $selected_studio_type = mysqli_real_escape_string($conn, $sched['studio_type'] ?? '');
+                        $play_date = mysqli_real_escape_string($conn, $sched['play_date'] ?? '');
+                        $selected_times = $sched['times'] ?? [];
 
-                    if ($selected_theater_id > 0 && !empty($selected_studio_type) && !empty($play_date) && !empty($selected_times)) {
-                        // Find StudioID
-                        $selected_studio_id = 0;
-                        $studio_lookup = mysqli_query($conn, "SELECT StudioID FROM studio WHERE TheaterID = $selected_theater_id AND Type = '$selected_studio_type' LIMIT 1");
-                        if ($studio_lookup && mysqli_num_rows($studio_lookup) > 0) {
-                            $selected_studio_id = mysqli_fetch_assoc($studio_lookup)['StudioID'];
-                        } else {
-                            $fallback_query = mysqli_query($conn, "SELECT StudioID FROM studio WHERE TheaterID = $selected_theater_id LIMIT 1");
-                            if ($fallback_query && mysqli_num_rows($fallback_query) > 0) {
-                                $selected_studio_id = mysqli_fetch_assoc($fallback_query)['StudioID'];
+                        if ($selected_theater_id > 0 && !empty($selected_studio_type) && !empty($play_date) && !empty($selected_times)) {
+                            // Find StudioID
+                            $selected_studio_id = 0;
+                            $studio_lookup = mysqli_query($conn, "SELECT StudioID FROM studio WHERE TheaterID = $selected_theater_id AND Type = '$selected_studio_type' LIMIT 1");
+                            if ($studio_lookup && mysqli_num_rows($studio_lookup) > 0) {
+                                $selected_studio_id = mysqli_fetch_assoc($studio_lookup)['StudioID'];
+                            } else {
+                                $fallback_query = mysqli_query($conn, "SELECT StudioID FROM studio WHERE TheaterID = $selected_theater_id LIMIT 1");
+                                if ($fallback_query && mysqli_num_rows($fallback_query) > 0) {
+                                    $selected_studio_id = mysqli_fetch_assoc($fallback_query)['StudioID'];
+                                }
                             }
-                        }
 
-                        if ($selected_studio_id > 0) {
-                            foreach ($selected_times as $j) {
-                                $start_time = '';
-                                if ($j === '07.00 - 09.00') $start_time = '07:00:00';
-                                elseif ($j === '10.00 - 12.00') $start_time = '10:00:00';
-                                elseif ($j === '13.00 - 15.00') $start_time = '13:00:00';
-                                elseif ($j === '16.00 - 18.00') $start_time = '16:00:00';
-                                elseif ($j === '19.00 - 21.00') $start_time = '19:00:00';
+                            if ($selected_studio_id > 0) {
+                                foreach ($selected_times as $j) {
+                                    $start_time = '';
+                                    if ($j === '07.00 - 09.00') $start_time = '07:00:00';
+                                    elseif ($j === '10.00 - 12.00') $start_time = '10:00:00';
+                                    elseif ($j === '13.00 - 15.00') $start_time = '13:00:00';
+                                    elseif ($j === '16.00 - 18.00') $start_time = '16:00:00';
+                                    elseif ($j === '19.00 - 21.00') $start_time = '19:00:00';
 
-                                if ($start_time) {
-                                    mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
-                                    $showtimes_inserted++;
+                                    if ($start_time) {
+                                        mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
+                                        $showtimes_inserted++;
+                                    }
                                 }
                             }
                         }
                     }
+                    $message = "Film dan jadwal tayang berhasil diperbarui!";
+                    header("Location: index.php?message=" . urlencode($message));
+                    exit();
+                } else {
+                    $message = "Gagal memperbarui film: " . mysqli_error($conn);
                 }
-                $message = "Film dan jadwal tayang berhasil diperbarui!";
-                header("Location: index.php?message=" . urlencode($message));
-                exit();
             } else {
-                $message = "Gagal memperbarui film: " . mysqli_error($conn);
+                // Insert Movie
+                $insertMovie = mysqli_query($conn, "INSERT INTO movie (Title, Duration, Genre, Rating, PosterURL) VALUES ('$judul', $duration, '$genre', $rating, '$posterUrl')");
+                if ($insertMovie) {
+                    $movie_id = mysqli_insert_id($conn);
+                    $showtimes_inserted = 0;
+
+                    // Insert schedules
+                    foreach ($schedules as $sched) {
+                        $selected_theater_id = intval($sched['theater_id'] ?? 0);
+                        $selected_studio_type = mysqli_real_escape_string($conn, $sched['studio_type'] ?? '');
+                        $play_date = mysqli_real_escape_string($conn, $sched['play_date'] ?? '');
+                        $selected_times = $sched['times'] ?? [];
+
+                        if ($selected_theater_id > 0 && !empty($selected_studio_type) && !empty($play_date) && !empty($selected_times)) {
+                            // Find StudioID
+                            $selected_studio_id = 0;
+                            $studio_lookup = mysqli_query($conn, "SELECT StudioID FROM studio WHERE TheaterID = $selected_theater_id AND Type = '$selected_studio_type' LIMIT 1");
+                            if ($studio_lookup && mysqli_num_rows($studio_lookup) > 0) {
+                                $selected_studio_id = mysqli_fetch_assoc($studio_lookup)['StudioID'];
+                            } else {
+                                $fallback_query = mysqli_query($conn, "SELECT StudioID FROM studio WHERE TheaterID = $selected_theater_id LIMIT 1");
+                                if ($fallback_query && mysqli_num_rows($fallback_query) > 0) {
+                                    $selected_studio_id = mysqli_fetch_assoc($fallback_query)['StudioID'];
+                                }
+                            }
+
+                            if ($selected_studio_id > 0) {
+                                foreach ($selected_times as $j) {
+                                    $start_time = '';
+                                    if ($j === '07.00 - 09.00') $start_time = '07:00:00';
+                                    elseif ($j === '10.00 - 12.00') $start_time = '10:00:00';
+                                    elseif ($j === '13.00 - 15.00') $start_time = '13:00:00';
+                                    elseif ($j === '16.00 - 18.00') $start_time = '16:00:00';
+                                    elseif ($j === '19.00 - 21.00') $start_time = '19:00:00';
+
+                                    if ($start_time) {
+                                        mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
+                                        $showtimes_inserted++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    $message = "Film berhasil ditambahkan ke Database!";
+                    header("Location: index.php?message=" . urlencode($message));
+                    exit();
+                } else {
+                    $message = "Gagal menambahkan film: " . mysqli_error($conn);
+                }
             }
         } else {
-            // Insert Movie
-            $insertMovie = mysqli_query($conn, "INSERT INTO movie (Title, Duration, Genre, Rating, PosterURL) VALUES ('$judul', $duration, '$genre', $rating, '$posterUrl')");
-            if ($insertMovie) {
-                $movie_id = mysqli_insert_id($conn);
-                $showtimes_inserted = 0;
-
-                // Insert schedules
-                foreach ($schedules as $sched) {
-                    $selected_theater_id = intval($sched['theater_id'] ?? 0);
-                    $selected_studio_type = mysqli_real_escape_string($conn, $sched['studio_type'] ?? '');
-                    $play_date = mysqli_real_escape_string($conn, $sched['play_date'] ?? '');
-                    $selected_times = $sched['times'] ?? [];
-
-                    if ($selected_theater_id > 0 && !empty($selected_studio_type) && !empty($play_date) && !empty($selected_times)) {
-                        // Find StudioID
-                        $selected_studio_id = 0;
-                        $studio_lookup = mysqli_query($conn, "SELECT StudioID FROM studio WHERE TheaterID = $selected_theater_id AND Type = '$selected_studio_type' LIMIT 1");
-                        if ($studio_lookup && mysqli_num_rows($studio_lookup) > 0) {
-                            $selected_studio_id = mysqli_fetch_assoc($studio_lookup)['StudioID'];
-                        } else {
-                            $fallback_query = mysqli_query($conn, "SELECT StudioID FROM studio WHERE TheaterID = $selected_theater_id LIMIT 1");
-                            if ($fallback_query && mysqli_num_rows($fallback_query) > 0) {
-                                $selected_studio_id = mysqli_fetch_assoc($fallback_query)['StudioID'];
-                            }
-                        }
-
-                        if ($selected_studio_id > 0) {
-                            foreach ($selected_times as $j) {
-                                $start_time = '';
-                                if ($j === '07.00 - 09.00') $start_time = '07:00:00';
-                                elseif ($j === '10.00 - 12.00') $start_time = '10:00:00';
-                                elseif ($j === '13.00 - 15.00') $start_time = '13:00:00';
-                                elseif ($j === '16.00 - 18.00') $start_time = '16:00:00';
-                                elseif ($j === '19.00 - 21.00') $start_time = '19:00:00';
-
-                                if ($start_time) {
-                                    mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
-                                    $showtimes_inserted++;
-                                }
-                            }
-                        }
-                    }
-                }
-                $message = "Film berhasil ditambahkan ke Database!";
-                header("Location: index.php?message=" . urlencode($message));
-                exit();
-            } else {
-                $message = "Gagal menambahkan film: " . mysqli_error($conn);
-            }
+            $message = "Semua kolom input wajib diisi!";
         }
-    } else {
-        $message = "Semua kolom input wajib diisi!";
+    } catch (Exception $e) {
+        $message = "Gagal memproses bioskop/jadwal: " . $e->getMessage();
     }
 }
 ?>
@@ -463,19 +476,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             <div class="mb-4">
                                 <label class="form-label">Genre</label>
-                                <select name="genre" class="form-select" required>
-                                    <option value="">Pilih Genre</option>
-                                    <?php foreach ($genres as $g): 
-                                        $selected = (isset($movie_data['Genre']) && $movie_data['Genre'] == $g) ? 'selected' : '';
-                                    ?>
-                                    <option value="<?php echo $g; ?>" <?php echo $selected; ?>><?php echo $g; ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <input type="text" name="genre" class="form-control" placeholder="Contoh: Aksi, Drama, Sci-Fi" value="<?php echo htmlspecialchars($movie_data['Genre'] ?? ''); ?>" required>
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label">Link Poster Film (URL)</label>
-                                <input type="url" name="poster_url" id="posterUrlInput" class="form-control" placeholder="https://example.com/poster.jpg" value="<?php echo htmlspecialchars($movie_data['PosterURL'] ?? ''); ?>" required>
+                                <label class="form-label">Link Poster Film (URL / Lokal)</label>
+                                <input type="text" name="poster_url" id="posterUrlInput" class="form-control" placeholder="https://example.com/poster.jpg atau poster.jpg" value="<?php echo htmlspecialchars($movie_data['PosterURL'] ?? ''); ?>" required>
                             </div>
 
                             <div class="row">
@@ -514,7 +520,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="col-md-4">
                                         <label class="form-label small text-muted">Bioskop</label>
                                         <select name="schedules[<?php echo $idx; ?>][theater_id]" class="form-select" required>
-                                            <option value="">Pilih Bioskop</option>
+                                            <option value="" disabled <?php echo empty($sched['theater_id']) ? 'selected' : ''; ?> hidden>Pilih Bioskop</option>
                                             <?php foreach ($theaters as $theater): ?>
                                             <option value="<?php echo $theater['TheaterID']; ?>" <?php echo $theater['TheaterID'] == $sched['theater_id'] ? 'selected' : ''; ?>>
                                                 <?php echo htmlspecialchars($theater['Name']); ?>
@@ -525,7 +531,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="col-md-3">
                                         <label class="form-label small text-muted">Tipe Studio</label>
                                         <select name="schedules[<?php echo $idx; ?>][studio_type]" class="form-select" required>
-                                            <option value="">Pilih Tipe Studio</option>
+                                            <option value="" disabled <?php echo empty($sched['studio_type']) ? 'selected' : ''; ?> hidden>Pilih Tipe Studio</option>
                                             <option value="Regular" <?php echo $sched['studio_type'] == 'Regular' ? 'selected' : ''; ?>>Regular</option>
                                             <option value="Velvet" <?php echo $sched['studio_type'] == 'Velvet' ? 'selected' : ''; ?>>Velvet Class</option>
                                             <option value="Gold Class" <?php echo $sched['studio_type'] == 'Gold Class' ? 'selected' : ''; ?>>Gold Class</option>
@@ -582,7 +588,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="col-md-4">
                         <label class="form-label small text-muted">Bioskop</label>
                         <select name="schedules[${scheduleIndex}][theater_id]" class="form-select" required>
-                            <option value="">Pilih Bioskop</option>
+                            <option value="" disabled selected hidden>Pilih Bioskop</option>
                             <?php foreach ($theaters as $theater): ?>
                             <option value="<?php echo $theater['TheaterID']; ?>"><?php echo htmlspecialchars($theater['Name']); ?></option>
                             <?php endforeach; ?>
@@ -591,7 +597,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="col-md-3">
                         <label class="form-label small text-muted">Tipe Studio</label>
                         <select name="schedules[${scheduleIndex}][studio_type]" class="form-select" required>
-                            <option value="">Pilih Tipe Studio</option>
+                            <option value="" disabled selected hidden>Pilih Tipe Studio</option>
                             <option value="Regular">Regular</option>
                             <option value="Velvet">Velvet Class</option>
                             <option value="Gold Class">Gold Class</option>

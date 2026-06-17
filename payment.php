@@ -18,6 +18,9 @@ $type = isset($_GET['type']) ? $_GET['type'] : 'Regular';
 $price = isset($_GET['price']) ? intval($_GET['price']) : 50000;
 $date = isset($_GET['date']) ? $_GET['date'] : 'Hari Ini';
 $time = isset($_GET['time']) ? $_GET['time'] : '19:30';
+
+// Format jam untuk tampilan agar user-friendly
+$time_display = date('H:i', strtotime($time)) . ' WIB';
 $seats = isset($_GET['seats']) ? $_GET['seats'] : 'D7,D8';
 $total = isset($_GET['total']) ? intval($_GET['total']) : 103000;
 
@@ -606,7 +609,7 @@ if ($userId) {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-calendar-check-fill" viewBox="0 0 16 16">
                                     <path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM16 14a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5h16v9zm-3-3.855c.749-.19 1.42-.553 2-1.041v.444c0 .496-.2.952-.524 1.282A1.996 1.996 0 0 1 13 11.145V10.145z"/>
                                 </svg>
-                                <?php echo htmlspecialchars($date); ?> - <?php echo htmlspecialchars($time); ?>
+                                <?php echo htmlspecialchars($date); ?> - <?php echo htmlspecialchars($time_display); ?>
                             </p>
                         </div>
                     </div>

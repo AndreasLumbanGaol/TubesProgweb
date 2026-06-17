@@ -217,9 +217,17 @@ if (isset($_GET['set_location'])) {
                     <span><?php echo htmlspecialchars($_SESSION['selected_location']); ?></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarLocationDropdown" style="background-color: #120707; border: 1px solid rgba(212, 175, 55, 0.3); z-index: 1050;">
-                    <li><a class="dropdown-item" href="?set_location=Bandung">Bandung</a></li>
-                    <li><a class="dropdown-item" href="?set_location=Jakarta">Jakarta</a></li>
-                    <li><a class="dropdown-item" href="?set_location=Surabaya">Surabaya</a></li>
+                    <?php
+                    $locs_query = mysqli_query($conn, "SELECT DISTINCT Location FROM theater ORDER BY Location ASC");
+                    if ($locs_query && mysqli_num_rows($locs_query) > 0) {
+                        while ($r = mysqli_fetch_assoc($locs_query)) {
+                            $loc_name = $r['Location'];
+                            echo '<li><a class="dropdown-item" href="?set_location=' . urlencode($loc_name) . '">' . htmlspecialchars($loc_name) . '</a></li>';
+                        }
+                    } else {
+                        echo '<li><a class="dropdown-item" href="#">Tidak ada lokasi</a></li>';
+                    }
+                    ?>
                 </ul>
             </div>
 
@@ -293,18 +301,13 @@ if (isset($_GET['set_location'])) {
         
         <div class="section-header">
             <h2 class="section-title">NOW SHOWING</h2>
-            <div class="dropdown ms-3">
-                <button class="btn btn-secondary dropdown-toggle location-badge border-0" type="button" data-bs-toggle="dropdown">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
+            <div class="ms-3">
+                <span class="location-badge" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3); padding: 5px 16px; border-radius: 50px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: default;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
                         <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
                     </svg>
                     <span><?php echo htmlspecialchars($_SESSION['selected_location']); ?></span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-dark">
-                    <li><a class="dropdown-item" href="?set_location=Bandung">Bandung</a></li>
-                    <li><a class="dropdown-item" href="?set_location=Jakarta">Jakarta</a></li>
-                    <li><a class="dropdown-item" href="?set_location=Surabaya">Surabaya</a></li>
-                </ul>
+                </span>
             </div>
         </div>
 
@@ -319,7 +322,7 @@ if (isset($_GET['set_location'])) {
                                   WHERE m.Rating > 0 AND t.Location = '$loc'
                                   ORDER BY m.MovieID ASC LIMIT 6";
             $res_now = mysqli_query($conn, $query_now_showing);
-            if($res_now) {
+            if($res_now && mysqli_num_rows($res_now) > 0) {
                 while($film = mysqli_fetch_assoc($res_now)): 
             ?>
             <div class="col">
@@ -338,6 +341,8 @@ if (isset($_GET['set_location'])) {
             </div>
             <?php 
                 endwhile; 
+            } else {
+                echo '<div class="col-12 text-center py-5"><p class="text-white-50 fs-6">Tidak ada film yang sedang tayang di lokasi ini.</p></div>';
             }
             ?>
         </div>

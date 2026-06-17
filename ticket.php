@@ -19,6 +19,9 @@ $type = isset($_GET['type']) ? $_GET['type'] : 'Regular';
 $price = isset($_GET['price']) ? intval($_GET['price']) : 50000;
 $date = isset($_GET['date']) ? $_GET['date'] : 'Hari Ini';
 $time = isset($_GET['time']) ? $_GET['time'] : '19:30';
+
+// Format jam untuk tampilan agar user-friendly
+$time_display = date('H:i', strtotime($time)) . ' WIB';
 $seats = isset($_GET['seats']) ? $_GET['seats'] : '';
 $total = isset($_GET['total']) ? intval($_GET['total']) : 103000;
 $method = isset($_GET['method']) ? $_GET['method'] : 'OVO';
@@ -68,16 +71,35 @@ if($userId) {
                           LIMIT 1";
         $res_find_st = mysqli_query($conn, $query_find_st);
         
-        // Set nilai default aman jika showtime belum di-set di panel admin (Fallback)
-        $showtime_id = 1; 
-        $studio_id = 1;
+        // Cari showtime secara ketat. Jika tidak ada di database, showtime_id tetap 0 (tidak valid).
+        $showtime_id = 0; 
+        $studio_id = 0;
         if ($res_find_st && mysqli_num_rows($res_find_st) > 0) {
             $row_st = mysqli_fetch_assoc($res_find_st);
-            $showtime_id = $row_st['ShowtimeID'];
-            $studio_id = $row_st['StudioID'];
+            $showtime_id = intval($row_st['ShowtimeID']);
+            $studio_id = intval($row_st['StudioID']);
+        }
+
+        // Jika ini tiket resell, ambil info showtime & studio dari tiket resell yang asli
+        if ($resell_ticket_id > 0) {
+            $query_seller_preview = mysqli_query($conn, "
+                SELECT ShowtimeID, StudioID 
+                FROM ticket 
+                WHERE TicketID = $resell_ticket_id
+                LIMIT 1
+            ");
+            if ($query_seller_preview && mysqli_num_rows($query_seller_preview) > 0) {
+                $row_preview = mysqli_fetch_assoc($query_seller_preview);
+                $showtime_id = intval($row_preview['ShowtimeID']);
+                $studio_id = intval($row_preview['StudioID']);
+            }
         }
 
         $payment_ok = true;
+        if ($showtime_id === 0 || $studio_id === 0) {
+            $payment_ok = false;
+            $payment_error = "Jadwal tayang tidak ditemukan di database! Transaksi dibatalkan.";
+        }
         if ($method === 'Tixly Wallet') {
             $res_bal = mysqli_query($conn, "SELECT Saldo FROM user WHERE UserID = '$userId'");
             if ($res_bal && mysqli_num_rows($res_bal) > 0) {
@@ -160,7 +182,9 @@ if($userId) {
             // Kunci token transaksi agar anti-duplicate saat di-refresh (F5)
             $_SESSION[$trxKey] = true;
         } else {
-            $payment_error = "Saldo Dompet Tixly Anda tidak mencukupi untuk melakukan transaksi ini. Silakan isi saldo Anda terlebih dahulu.";
+            if (empty($payment_error)) {
+                $payment_error = "Saldo Dompet Tixly Anda tidak mencukupi untuk melakukan transaksi ini. Silakan isi saldo Anda terlebih dahulu.";
+            }
         }
     }
 }
@@ -281,7 +305,7 @@ $booking_code = "TXL-2026-" . $movie_code . "-" . $random_num;
 
                     <div class="ticket-details-grid">
                         <div><div class="ticket-label">TANGGAL</div><div class="ticket-value"><?php echo htmlspecialchars($date); ?></div></div>
-                        <div><div class="ticket-label">JAM TAYANG</div><div class="ticket-value"><?php echo htmlspecialchars($time); ?></div></div>
+                        <div><div class="ticket-label">JAM TAYANG</div><div class="ticket-value"><?php echo htmlspecialchars($time_display); ?></div></div>
                         <div><div class="ticket-label">DURASI</div><div class="ticket-value"><?php echo htmlspecialchars($duration); ?></div></div>
                         <div><div class="ticket-label">BIOSKOP</div><div class="ticket-value"><?php echo htmlspecialchars($cinema); ?></div></div>
                         <div><div class="ticket-label">STUDIO</div><div class="ticket-value"><?php echo htmlspecialchars($type); ?></div></div>

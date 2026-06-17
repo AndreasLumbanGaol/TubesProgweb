@@ -8,7 +8,7 @@ include_once __DIR__ . '/../koneksi.php';
 $page = 'dashboard';
 
 // Handle delete film action
-$message = '';
+$message = isset($_GET['message']) ? $_GET['message'] : '';
 if (isset($_GET['delete_id'])) {
     $delete_id = intval($_GET['delete_id']);
     // Since movie.MovieID has ON DELETE CASCADE constraint on showtimes, deleting a movie will automatically delete its showtimes and tickets!

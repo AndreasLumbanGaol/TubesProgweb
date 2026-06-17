@@ -52,18 +52,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $isLogge
         if ($_POST['action'] == 'jual_tiket') {
             $second_price = mysqli_real_escape_string($conn, $_POST['second_price']);
             
-            // Validasi H-1 sebelum hari tayang
-            $query_showtime = "SELECT s.PlayDate FROM ticket t 
+            // Validasi H-1 sebelum hari tayang (minimal 24 jam dari sekarang)
+            $query_showtime = "SELECT s.PlayDate, s.StartTime FROM ticket t 
                                JOIN showtime s ON t.ShowtimeID = s.ShowtimeID 
                                WHERE t.TicketID = '$ticket_id_target' LIMIT 1";
             $res_showtime = mysqli_query($conn, $query_showtime);
             if ($res_showtime && mysqli_num_rows($res_showtime) > 0) {
                 $row_showtime = mysqli_fetch_assoc($res_showtime);
-                $playdate = $row_showtime['PlayDate'];
-                $today = date('Y-m-d');
-                $tomorrow = date('Y-m-d', strtotime('+1 day'));
+                $showtime_str = $row_showtime['PlayDate'] . ' ' . $row_showtime['StartTime'];
+                $showtime_timestamp = strtotime($showtime_str);
                 
-                if ($playdate < $tomorrow) {
+                if (($showtime_timestamp - time()) < 86400) {
                     header("Location: resell.php?pesan=h_minus_1_error");
                     exit;
                 }
@@ -162,6 +161,29 @@ if (isset($_GET['set_location'])) {
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid navbar-container">
             <a class="navbar-brand" href="index.php">Tixly<span>Cinema</span></a>
+            
+            <div class="dropdown me-auto ms-3 d-none d-lg-block">
+                <button class="btn btn-outline-warning btn-sm dropdown-toggle rounded-pill px-3" type="button" id="navbarLocationDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: rgba(212, 175, 55, 0.4); color: #d4af37; background: rgba(212, 175, 55, 0.05); font-size: 13px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-geo-alt-fill me-1" viewBox="0 0 16 16">
+                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                    </svg>
+                    <span><?php echo htmlspecialchars($_SESSION['selected_location']); ?></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarLocationDropdown" style="background-color: #120707; border: 1px solid rgba(212, 175, 55, 0.3); z-index: 1050;">
+                    <?php
+                    $locs_query = mysqli_query($conn, "SELECT DISTINCT Location FROM theater ORDER BY Location ASC");
+                    if ($locs_query && mysqli_num_rows($locs_query) > 0) {
+                        while ($r = mysqli_fetch_assoc($locs_query)) {
+                            $loc_name = $r['Location'];
+                            echo '<li><a class="dropdown-item" href="?set_location=' . urlencode($loc_name) . '">' . htmlspecialchars($loc_name) . '</a></li>';
+                        }
+                    } else {
+                        echo '<li><a class="dropdown-item" href="#">Tidak ada lokasi</a></li>';
+                    }
+                    ?>
+                </ul>
+            </div>
+            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -235,7 +257,10 @@ if (isset($_GET['set_location'])) {
             if ($res_resale && mysqli_num_rows($res_resale) > 0) {
                 while ($ticket = mysqli_fetch_assoc($res_resale)) {
                     $playDate = date('d M Y', strtotime($ticket['PlayDate']));
-                    $startTime = date('H:i', strtotime($ticket['StartTime']));
+                    
+                    $startTimeRaw = date('H:i', strtotime($ticket['StartTime']));
+                    $startTime = $startTimeRaw . ' WIB';
+                    
                     $theaterText = htmlspecialchars($ticket['TheaterName']);
                     $seatText = 'Kursi: ' . htmlspecialchars($ticket['SeatInfo']) . ' (1 Tiket)';
                     
@@ -244,7 +269,7 @@ if (isset($_GET['set_location'])) {
                         'movie' => $ticket['Title'], 'poster' => $ticket['PosterURL'],
                         'duration' => $ticket['Duration'] . 'm', 'cinema' => $ticket['TheaterName'], 
                         'type' => $ticket['Type'], 'price' => $ticket['SecondPrice'], 
-                        'date' => $playDate, 'time' => $startTime, 
+                        'date' => $playDate, 'time' => $startTimeRaw, 
                         'seats' => $ticket['SeatInfo'], 'total' => $ticket['SecondPrice'] + 3000
                     ]);
             ?>
@@ -301,10 +326,10 @@ if (isset($_GET['set_location'])) {
                                 while ($myticket = mysqli_fetch_assoc($res_mytickets)) {
                                     $potongan = $myticket['FirstPrice'] - ($myticket['FirstPrice'] * 0.10);
                                     
-                                    // Pengecekan H-1 sebelum hari tayang
-                                    $playdate = $myticket['PlayDate'];
-                                    $tomorrow = date('Y-m-d', strtotime('+1 day'));
-                                    $is_resellable = ($playdate >= $tomorrow);
+                                    // Pengecekan H-1 minimal 24 jam sebelum hari tayang
+                                    $showtime_str = $myticket['PlayDate'] . ' ' . $myticket['StartTime'];
+                                    $showtime_timestamp = strtotime($showtime_str);
+                                    $is_resellable = (($showtime_timestamp - time()) >= 86400);
                         ?>
                                     <form action="resell.php" method="POST" class="m-0">
                                         <?php if($myticket['IsResale'] == 0): ?>

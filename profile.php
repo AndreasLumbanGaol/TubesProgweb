@@ -238,6 +238,32 @@ if ($userId) {
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid navbar-container">
             <a class="navbar-brand" href="index.php">Tixly<span>Cinema</span></a>
+            
+            <div class="dropdown me-auto ms-3 d-none d-lg-block">
+                <button class="btn btn-outline-warning btn-sm dropdown-toggle rounded-pill px-3" type="button" id="navbarLocationDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: rgba(212, 175, 55, 0.4); color: #d4af37; background: rgba(212, 175, 55, 0.05); font-size: 13px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-geo-alt-fill me-1" viewBox="0 0 16 16">
+                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                    </svg>
+                    <span><?php echo htmlspecialchars($_SESSION['selected_location']); ?></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarLocationDropdown" style="background-color: #120707; border: 1px solid rgba(212, 175, 55, 0.3); z-index: 1050;">
+                    <?php
+                    $locs_query = mysqli_query($conn, "SELECT DISTINCT Location FROM theater ORDER BY Location ASC");
+                    if ($locs_query && mysqli_num_rows($locs_query) > 0) {
+                        while ($r = mysqli_fetch_assoc($locs_query)) {
+                            $loc_name = $r['Location'];
+                            echo '<li><a class="dropdown-item" href="?set_location=' . urlencode($loc_name) . '">' . htmlspecialchars($loc_name) . '</a></li>';
+                        }
+                    } else {
+                        echo '<li><a class="dropdown-item" href="#">Tidak ada lokasi</a></li>';
+                    }
+                    ?>
+                </ul>
+            </div>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav nav-center-menu">
                     <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>

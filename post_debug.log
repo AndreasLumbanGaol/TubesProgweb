@@ -1,0 +1,26 @@
+Array
+(
+    [edit_id] => 3
+    [judul] => Wonka Test Edit
+    [genre] => Adventure
+    [poster_url] => https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg
+    [duration] => 116
+    [rating] => 7.5
+    [schedules] => Array
+        (
+            [0] => Array
+                (
+                    [theater_id] => 1
+                    [studio_type] => Regular
+                    [play_date] => 2026-06-25
+                    [times] => Array
+                        (
+                            [0] => 10.00 - 12.00
+                            [1] => 13.00 - 15.00
+                        )
+
+                )
+
+        )
+
+)

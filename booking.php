@@ -19,6 +19,9 @@ $price = isset($_GET['price']) ? intval($_GET['price']) : 50000;
 $date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
 $time = isset($_GET['time']) ? $_GET['time'] : '19:30';
 
+// Format jam untuk tampilan agar user-friendly
+$time_display = date('H:i', strtotime($time)) . ' WIB';
+
 // Format tanggal untuk tampilan agar user-friendly
 $date_display = date('d M Y', strtotime($date));
 $hari = date('Y-m-d', strtotime($date));
@@ -338,8 +341,8 @@ if ($showtime_id > 0) {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav nav-center-menu">
                     <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="films.php">Films</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="#">Resell Ticket</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="films.php">Films</a></li>
+                    <li class="nav-item"><a class="nav-link" href="resell.php">Resell Ticket</a></li>
                 </ul>
                 <div class="user-actions">
                     <?php 
@@ -364,7 +367,18 @@ if ($showtime_id > 0) {
             </div>
         </div>
     </nav>
-
+    <?php if ($showtime_id <= 0): ?>
+        <div class="container my-5 text-center">
+            <div class="card bg-dark border-secondary p-5" style="max-width: 600px; margin: 2rem auto; border-radius: 10px; border: 1px solid #3a2626; background-color: #150808 !important;">
+                <h3 class="text-warning mb-4">Jadwal Tayang Tidak Ditemukan</h3>
+                <p class="text-light mb-4" style="line-height: 1.6;">Maaf, jadwal tayang untuk film <strong><?php echo htmlspecialchars($movie); ?></strong> pada bioskop <strong><?php echo htmlspecialchars($cinema); ?></strong> (<?php echo htmlspecialchars($type); ?>) tanggal <strong><?php echo htmlspecialchars($date_display); ?></strong> pukul <strong><?php echo htmlspecialchars($time_display); ?></strong> tidak ditemukan di database. Silakan pilih jadwal lain.</p>
+                <div>
+                    <a href="index.php" class="btn px-4 py-2 me-3" style="font-weight: bold; border-radius: 20px; background-color: #d4af37; color: #000; text-decoration: none;">Kembali ke Beranda</a>
+                    <a href="films.php" class="btn px-4 py-2" style="font-weight: bold; border-radius: 20px; color: #d4af37; border: 1px solid #d4af37; text-decoration: none;">Lihat Film Lain</a>
+                </div>
+            </div>
+        </div>
+    <?php else: ?>
     <div class="container booking-section">
         <div class="row booking-grid">
             
@@ -427,7 +441,7 @@ if ($showtime_id > 0) {
                         <img src="<?php echo htmlspecialchars($poster); ?>" class="movie-poster" alt="<?php echo htmlspecialchars($movie); ?>">
                         <div class="movie-details">
                             <h6><?php echo htmlspecialchars($movie); ?></h6>
-                            <p><?php echo htmlspecialchars($date_display); ?> - <?php echo htmlspecialchars($time); ?></p>
+                            <p><?php echo htmlspecialchars($date_display); ?> - <?php echo htmlspecialchars($time_display); ?></p>
                             <p><?php echo htmlspecialchars($cinema); ?> - <span id="summary-seats-label">Belum ada kursi</span></p>
                         </div>
                     </div>
@@ -460,9 +474,11 @@ if ($showtime_id > 0) {
 
         </div> 
     </div> 
+    <?php endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <?php if ($showtime_id > 0): ?>
     <script>
         // Parameters from PHP
         const ticketType = "<?php echo htmlspecialchars($type); ?>";
@@ -576,5 +592,6 @@ if ($showtime_id > 0) {
         // Initialize on load
         updateSummary();
     </script>
+    <?php endif; ?>
 </body>
 </html>

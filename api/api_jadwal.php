@@ -31,11 +31,14 @@ if ($result) {
             $label_hari = "Besok (" . date('d M', strtotime($row['PlayDate'])) . ")";
         }
 
+        $raw_time_str = date('H:i', strtotime($row['StartTime']));
+        $time_label = $raw_time_str . ' WIB';
+
         $jadwal[] = [
             'date_label' => $label_hari,
-            'time' => date('H:i', strtotime($row['StartTime'])) . ' WIB',
+            'time' => $time_label,
             'raw_date' => $row['PlayDate'],
-            'raw_time' => date('H:i', strtotime($row['StartTime']))
+            'raw_time' => $raw_time_str
         ];
     }
 }
