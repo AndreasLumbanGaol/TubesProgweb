@@ -50,7 +50,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $isLogge
 
     if (mysqli_num_rows($hasil_cek) > 0) {
         if ($_POST['action'] == 'jual_tiket') {
-            $second_price = mysqli_real_escape_string($conn, $_POST['second_price']);
+            // Dapatkan FirstPrice dari tiket target di database demi keamanan
+            $query_ticket_price = "SELECT FirstPrice FROM ticket WHERE TicketID = '$ticket_id_target' LIMIT 1";
+            $res_ticket_price = mysqli_query($conn, $query_ticket_price);
+            if ($res_ticket_price && mysqli_num_rows($res_ticket_price) > 0) {
+                $row_ticket_price = mysqli_fetch_assoc($res_ticket_price);
+                $first_price = intval($row_ticket_price['FirstPrice']);
+                // Tentukan harga resell: 10% lebih mahal
+                $second_price = $first_price + ($first_price * 0.10);
+            } else {
+                header("Location: resell.php?pesan=error_sistem");
+                exit;
+            }
             
             // Validasi H-1 sebelum hari tayang (minimal 24 jam dari sekarang)
             $query_showtime = "SELECT s.PlayDate, s.StartTime FROM ticket t 
@@ -308,7 +319,7 @@ if (isset($_GET['set_location'])) {
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body px-4 py-3">
-                    <p class="text-white-50 small mb-3">* Catatan: Sistem otomatis memotong harga tiket sebesar 10% untuk pembeli pasar resell.</p>
+                    <p class="text-white-50 small mb-3">* Catatan: Sistem otomatis menetapkan harga tiket resell sebesar 10% lebih mahal untuk pembeli, dan penjual akan menerima dana 10% lebih murah dari harga beli langsung (tidak mendapatkan keuntungan).</p>
                     
                     <div>
                         <?php 
@@ -324,7 +335,8 @@ if (isset($_GET['set_location'])) {
 
                             if ($res_mytickets && mysqli_num_rows($res_mytickets) > 0) {
                                 while ($myticket = mysqli_fetch_assoc($res_mytickets)) {
-                                    $potongan = $myticket['FirstPrice'] - ($myticket['FirstPrice'] * 0.10);
+                                    $resell_price = $myticket['FirstPrice'] + ($myticket['FirstPrice'] * 0.10);
+                                    $payout = $myticket['FirstPrice'] - ($myticket['FirstPrice'] * 0.10);
                                     
                                     // Pengecekan H-1 minimal 24 jam sebelum hari tayang
                                     $showtime_str = $myticket['PlayDate'] . ' ' . $myticket['StartTime'];
@@ -338,7 +350,7 @@ if (isset($_GET['set_location'])) {
                                             <input type="hidden" name="action" value="batal_jual">
                                         <?php endif; ?>
                                         <input type="hidden" name="ticket_id" value="<?php echo $myticket['TicketID']; ?>">
-                                        <input type="hidden" name="second_price" value="<?php echo $potongan; ?>">
+                                        <input type="hidden" name="second_price" value="<?php echo $resell_price; ?>">
                                         
                                         <div class="my-ticket-item d-flex align-items-center justify-content-between <?php echo ($myticket['IsResale'] == 1) ? 'border border-warning' : ''; ?>">
                                             <div class="d-flex align-items-center gap-3">
@@ -354,7 +366,8 @@ if (isset($_GET['set_location'])) {
                                                 </div>
                                             </div>
                                             <div class="text-end">
-                                                <div style="color: #d4af37; font-weight: bold; font-size: 15px;">Rp <?php echo number_format($potongan, 0, ',', '.'); ?></div>
+                                                <div style="color: #d4af37; font-weight: bold; font-size: 14px;" title="Harga Jual">Harga Jual: Rp <?php echo number_format($resell_price, 0, ',', '.'); ?></div>
+                                                <div style="color: #ff4d4d; font-weight: bold; font-size: 12px;" title="Dana Diterima">Dana Diterima: Rp <?php echo number_format($payout, 0, ',', '.'); ?></div>
                                                 <div class="modal-price-calc">Asli: Rp <?php echo number_format($myticket['FirstPrice'], 0, ',', '.'); ?></div>
                                                 
                                                 <?php if($myticket['IsResale'] == 0): ?>

@@ -392,9 +392,10 @@ if ($userId) {
                             </div>
                         <?php else: ?>
                             <?php foreach ($sales_history as $sale): 
-                                $isSold = ($sale['IsResale'] == 0);
+                                $isSold = ($sale['IsResale'] == 0 && $sale['Status'] == 'terjual');
                                 $statusBadge = $isSold ? '<span class="badge bg-success text-white px-3 py-2 rounded-pill">Terjual</span>' : '<span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Pending</span>';
-                                $priceDisplay = $sale['SecondPrice'] ? $sale['SecondPrice'] : $sale['FirstPrice'];
+                                $sellPrice = $sale['SecondPrice'] ? $sale['SecondPrice'] : ($sale['FirstPrice'] * 1.10);
+                                $earned = $sale['FirstPrice'] - ($sale['FirstPrice'] * 0.10);
                             ?>
                                 <div class="resell-history-item p-3 mb-3 d-flex align-items-center justify-content-between" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(212,175,55,0.15); border-radius: 16px;">
                                     <div class="d-flex align-items-center gap-3">
@@ -406,9 +407,12 @@ if ($userId) {
                                         </div>
                                     </div>
                                     <div class="text-end d-flex flex-column align-items-end gap-2">
-                                        <div>
+                                        <div style="text-align: right;">
                                             <span class="small text-muted d-block" style="font-size: 10px;">HARGA JUAL</span>
-                                            <strong class="text-warning" style="font-size: 16px;">Rp <?php echo number_format($priceDisplay, 0, ',', '.'); ?></strong>
+                                            <strong class="text-warning d-block" style="font-size: 14px;">Rp <?php echo number_format($sellPrice, 0, ',', '.'); ?></strong>
+                                            
+                                            <span class="small text-muted d-block mt-1" style="font-size: 10px;"><?php echo $isSold ? 'DANA DITERIMA' : 'ESTIMASI TERIMA'; ?></span>
+                                            <strong class="<?php echo $isSold ? 'text-success' : 'text-danger'; ?> d-block" style="font-size: 14px;">Rp <?php echo number_format($earned, 0, ',', '.'); ?></strong>
                                         </div>
                                         <div>
                                             <?php echo $statusBadge; ?>

@@ -122,7 +122,7 @@ if($userId) {
                 
                 // Cari ID Penjual, Harga Jual, dan info kursi tiket dari tiket sebelum kepemilikan diproses
                 $query_seller = mysqli_query($conn, "
-                    SELECT tr.UserID AS SellerID, tk.SecondPrice, tk.ShowtimeID, tk.StudioID, tk.SeatInfo 
+                    SELECT tr.UserID AS SellerID, tk.FirstPrice, tk.SecondPrice, tk.ShowtimeID, tk.StudioID, tk.SeatInfo 
                     FROM ticket tk
                     JOIN `transaction` tr ON tk.TransactionID = tr.TransactionID
                     WHERE tk.TicketID = $resell_ticket_id
@@ -130,6 +130,7 @@ if($userId) {
                 ");
                 
                 $seller_id = 0;
+                $first_price = 0;
                 $resell_price = 0;
                 $showtime_id = 0;
                 $studio_id = 0;
@@ -138,6 +139,7 @@ if($userId) {
                 if ($query_seller && mysqli_num_rows($query_seller) > 0) {
                     $row_seller = mysqli_fetch_assoc($query_seller);
                     $seller_id = intval($row_seller['SellerID']);
+                    $first_price = intval($row_seller['FirstPrice']);
                     $resell_price = intval($row_seller['SecondPrice']);
                     $showtime_id = intval($row_seller['ShowtimeID']);
                     $studio_id = intval($row_seller['StudioID']);
@@ -158,9 +160,10 @@ if($userId) {
                     $query_update_seller_ticket = "UPDATE ticket SET Status = 'terjual', IsResale = 0 WHERE TicketID = $resell_ticket_id";
                     mysqli_query($conn, $query_update_seller_ticket);
                     
-                    // 3. Tambahkan uang penjualan tiket ke Saldo penjual
-                    if ($seller_id > 0 && $resell_price > 0) {
-                        mysqli_query($conn, "UPDATE user SET Saldo = Saldo + $resell_price WHERE UserID = $seller_id");
+                    // 3. Tambahkan uang penjualan tiket ke Saldo penjual (dapat 10% lebih sedikit dari FirstPrice)
+                    if ($seller_id > 0 && $first_price > 0) {
+                        $payout = $first_price - ($first_price * 0.10);
+                        mysqli_query($conn, "UPDATE user SET Saldo = Saldo + $payout WHERE UserID = $seller_id");
                     }
                 }
             } else {
