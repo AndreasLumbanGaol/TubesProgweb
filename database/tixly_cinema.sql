@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 18, 2026 at 04:57 AM
+-- Generation Time: Jun 18, 2026 at 05:21 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -33,32 +33,33 @@ CREATE TABLE `movie` (
   `Duration` int(11) DEFAULT NULL,
   `Genre` varchar(100) DEFAULT NULL,
   `Rating` decimal(3,1) DEFAULT NULL,
-  `PosterURL` text DEFAULT NULL
+  `PosterURL` text DEFAULT NULL,
+  `TrailerURL` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `movie`
 --
 
-INSERT INTO `movie` (`MovieID`, `Title`, `Duration`, `Genre`, `Rating`, `PosterURL`) VALUES
-(1, 'AVATAR: The Way of Water', 192, 'Aksi, Drama, Sci-Fi', 8.4, 'https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg'),
-(2, 'JOKER: Put On A Happy Face', 60, 'Drama, Thriller', 8.4, 'https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg'),
-(3, 'Wonka', 116, 'Adventure, Comedy, Family', 6.9, 'https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg'),
-(4, 'Guardians of The Galaxy', 121, 'Aksi, Petualangan, Komedi', 8.0, 'https://image.tmdb.org/t/p/w500/r7XifzvtezNt31ypvsmb6Oqxw49.jpg'),
-(5, 'Avengers', 181, 'Aksi, Sci-Fi', 8.5, 'https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg'),
-(6, 'Ghost In The Cell', 106, 'Horror, Mystery', 7.5, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg'),
-(7, 'Jumbo', 102, 'Animasi, Keluarga', 7.0, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_9cdf1156e0f7b0ee9a45f143ce11976e.jpg'),
-(8, 'Yang Lain Boleh Hilang, Asal Kau Jangan', 113, 'Romantis, Drama', 7.2, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_d4bc3b7b9035989df6277825cf5fefd5.jpg'),
-(9, '2nd Miracle In Cell No 7', 147, 'Drama, Keluarga', 8.3, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_38ea256af71e0767b204e1c300fc4f09.png'),
-(10, 'Sekawan Limo', 112, 'Komedi, Horror', 7.8, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_840a7c47b45221974b785876428c61f6.jpeg'),
-(11, 'The Devil Wears Prada 2', 119, 'Drama, Komedi', 7.4, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5cd2d563ce3516fc292cb495c3d666e2.jpg'),
-(12, 'SALMOKJI: WHISPERING WATER', 101, 'Thriller, Misteri', 6.8, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_3a0e2045bc02d6479c7fade242ce64ed.png'),
-(13, 'SONIC 4: The Hedgehog', 120, 'Animasi, Aksi, Komedi', 0.0, 'https://bit.ly/4v8IiMK'),
-(14, 'Spider-man: Across The Spider Verse', 140, 'Animasi, Aksi, Petualangan', 8.7, 'https://cinemags.org/?attachment_id=192228'),
-(15, 'Man Of Tomorrow', 110, 'Aksi, Sci-Fi', 0.0, 'https://posterspy.com/wp-content/uploads/2024/01/PosterSpy-Man-of-Tomorrow-Teaser-version-site.jpg'),
-(16, 'Minion & Monsters', 95, 'Animasi, Komedi, Keluarga', 0.0, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTaU3-BIeHwacBlx1pr2juR3RH-yhNN06rgdw&s'),
-(17, 'Frozen III', 105, 'Animasi, Petualangan, Keluarga', 0.0, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBVpQ2G6WhTrJfC0i0_NiJjxh10EncCx3ujg&s'),
-(19, 'Test Movie', 120, 'Action', 8.5, 'poster.jpg');
+INSERT INTO `movie` (`MovieID`, `Title`, `Duration`, `Genre`, `Rating`, `PosterURL`, `TrailerURL`) VALUES
+(1, 'AVATAR: The Way of Water', 192, 'Aksi, Drama, Sci-Fi', 8.4, 'https://upload.wikimedia.org/wikipedia/id/5/54/Avatar_The_Way_of_Water_poster.jpg', NULL),
+(2, 'JOKER: Put On A Happy Face', 60, 'Drama, Thriller', 8.4, 'https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg', NULL),
+(3, 'Wonka', 116, 'Adventure, Comedy, Family', 6.9, 'https://image.tmdb.org/t/p/w500/qhb1qOilapbapxWQn9jtRCMwXJF.jpg', 'https://youtu.be/otNh9bTjXWg?si=UC5BP4zDVmTDgaYe'),
+(4, 'Guardians of The Galaxy', 121, 'Aksi, Petualangan, Komedi', 8.0, 'https://image.tmdb.org/t/p/w500/r7XifzvtezNt31ypvsmb6Oqxw49.jpg', NULL),
+(5, 'Avengers', 181, 'Aksi, Sci-Fi', 8.5, 'https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg', NULL),
+(6, 'Ghost In The Cell', 106, 'Horror, Mystery', 7.5, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5421e6fbe0a18094aa35cfacf23a23d3.jpg', NULL),
+(7, 'Jumbo', 102, 'Animasi, Keluarga', 7.0, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_9cdf1156e0f7b0ee9a45f143ce11976e.jpg', NULL),
+(8, 'Yang Lain Boleh Hilang, Asal Kau Jangan', 113, 'Romantis, Drama', 7.2, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_d4bc3b7b9035989df6277825cf5fefd5.jpg', NULL),
+(9, '2nd Miracle In Cell No 7', 147, 'Drama, Keluarga', 8.3, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_38ea256af71e0767b204e1c300fc4f09.png', NULL),
+(10, 'Sekawan Limo', 112, 'Komedi, Horror', 7.8, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_840a7c47b45221974b785876428c61f6.jpeg', NULL),
+(11, 'The Devil Wears Prada 2', 119, 'Drama, Komedi', 7.4, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_5cd2d563ce3516fc292cb495c3d666e2.jpg', NULL),
+(12, 'SALMOKJI: WHISPERING WATER', 101, 'Thriller, Misteri', 6.8, 'https://lsf.go.id/storage/app/resources/resize/300_450_0_0_crop/img_3a0e2045bc02d6479c7fade242ce64ed.png', NULL),
+(13, 'SONIC 4: The Hedgehog', 120, 'Animasi, Aksi, Komedi', 0.0, 'https://bit.ly/4v8IiMK', NULL),
+(14, 'Spider-man: Across The Spider Verse', 140, 'Animasi, Aksi, Petualangan', 8.7, 'https://cinemags.org/?attachment_id=192228', NULL),
+(15, 'Man Of Tomorrow', 110, 'Aksi, Sci-Fi', 0.0, 'https://posterspy.com/wp-content/uploads/2024/01/PosterSpy-Man-of-Tomorrow-Teaser-version-site.jpg', NULL),
+(16, 'Minion & Monsters', 95, 'Animasi, Komedi, Keluarga', 0.0, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTaU3-BIeHwacBlx1pr2juR3RH-yhNN06rgdw&s', NULL),
+(17, 'Frozen III', 105, 'Animasi, Petualangan, Keluarga', 0.0, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBVpQ2G6WhTrJfC0i0_NiJjxh10EncCx3ujg&s', NULL),
+(19, 'Test Movie', 120, 'Action', 8.5, 'poster.jpg', NULL);
 
 -- --------------------------------------------------------
 
@@ -1032,45 +1033,45 @@ INSERT INTO `showtime` (`ShowtimeID`, `StartTime`, `PlayDate`, `MovieID`, `Studi
 (574, '13:00:00', '2026-06-27', 19, 14),
 (575, '16:00:00', '2026-06-27', 19, 1),
 (576, '19:00:00', '2026-06-27', 19, 2),
-(613, '10:00:00', '2026-06-18', 3, 1),
-(614, '12:00:00', '2026-06-18', 3, 1),
-(615, '15:00:00', '2026-06-18', 3, 1),
-(616, '10:00:00', '2026-06-19', 3, 1),
-(617, '12:00:00', '2026-06-19', 3, 1),
-(618, '10:00:00', '2026-06-20', 3, 1),
-(619, '15:00:00', '2026-06-20', 3, 1),
-(620, '10:00:00', '2026-06-21', 3, 1),
-(621, '15:00:00', '2026-06-21', 3, 1),
-(622, '10:00:00', '2026-06-22', 3, 1),
-(623, '15:00:00', '2026-06-22', 3, 1),
-(624, '12:00:00', '2026-06-23', 3, 1),
-(625, '15:00:00', '2026-06-23', 3, 1),
-(626, '15:00:00', '2026-06-21', 3, 4),
-(627, '15:00:00', '2026-06-21', 3, 5),
-(628, '10:00:00', '2026-06-22', 3, 5),
-(629, '12:00:00', '2026-06-22', 3, 11),
-(630, '15:00:00', '2026-06-22', 3, 12),
-(631, '15:00:00', '2026-06-22', 3, 13),
-(632, '10:00:00', '2026-06-23', 3, 11),
-(633, '12:00:00', '2026-06-23', 3, 12),
-(634, '15:00:00', '2026-06-23', 3, 13),
-(635, '15:00:00', '2026-06-23', 3, 14),
-(636, '10:00:00', '2026-06-24', 3, 12),
-(637, '12:00:00', '2026-06-24', 3, 13),
-(638, '15:00:00', '2026-06-24', 3, 14),
-(639, '15:00:00', '2026-06-24', 3, 1),
-(640, '10:00:00', '2026-06-25', 3, 13),
-(641, '12:00:00', '2026-06-25', 3, 14),
-(642, '15:00:00', '2026-06-25', 3, 1),
-(643, '15:00:00', '2026-06-25', 3, 2),
-(644, '10:00:00', '2026-06-26', 3, 14),
-(645, '12:00:00', '2026-06-26', 3, 1),
-(646, '15:00:00', '2026-06-26', 3, 2),
-(647, '15:00:00', '2026-06-26', 3, 3),
-(648, '10:00:00', '2026-06-27', 3, 1),
-(649, '12:00:00', '2026-06-27', 3, 2),
-(650, '15:00:00', '2026-06-27', 3, 3),
-(651, '15:00:00', '2026-06-27', 3, 4);
+(652, '10:00:00', '2026-06-18', 3, 1),
+(653, '12:00:00', '2026-06-18', 3, 1),
+(654, '15:00:00', '2026-06-18', 3, 1),
+(655, '10:00:00', '2026-06-19', 3, 1),
+(656, '12:00:00', '2026-06-19', 3, 1),
+(657, '10:00:00', '2026-06-20', 3, 1),
+(658, '15:00:00', '2026-06-20', 3, 1),
+(659, '10:00:00', '2026-06-21', 3, 1),
+(660, '15:00:00', '2026-06-21', 3, 1),
+(661, '10:00:00', '2026-06-22', 3, 1),
+(662, '15:00:00', '2026-06-22', 3, 1),
+(663, '12:00:00', '2026-06-23', 3, 1),
+(664, '15:00:00', '2026-06-23', 3, 1),
+(665, '15:00:00', '2026-06-21', 3, 4),
+(666, '15:00:00', '2026-06-21', 3, 5),
+(667, '10:00:00', '2026-06-22', 3, 5),
+(668, '12:00:00', '2026-06-22', 3, 11),
+(669, '15:00:00', '2026-06-22', 3, 12),
+(670, '15:00:00', '2026-06-22', 3, 13),
+(671, '10:00:00', '2026-06-23', 3, 11),
+(672, '12:00:00', '2026-06-23', 3, 12),
+(673, '15:00:00', '2026-06-23', 3, 13),
+(674, '15:00:00', '2026-06-23', 3, 14),
+(675, '10:00:00', '2026-06-24', 3, 12),
+(676, '12:00:00', '2026-06-24', 3, 13),
+(677, '15:00:00', '2026-06-24', 3, 14),
+(678, '15:00:00', '2026-06-24', 3, 1),
+(679, '10:00:00', '2026-06-25', 3, 13),
+(680, '12:00:00', '2026-06-25', 3, 14),
+(681, '15:00:00', '2026-06-25', 3, 1),
+(682, '15:00:00', '2026-06-25', 3, 2),
+(683, '10:00:00', '2026-06-26', 3, 14),
+(684, '12:00:00', '2026-06-26', 3, 1),
+(685, '15:00:00', '2026-06-26', 3, 2),
+(686, '15:00:00', '2026-06-26', 3, 3),
+(687, '10:00:00', '2026-06-27', 3, 1),
+(688, '12:00:00', '2026-06-27', 3, 2),
+(689, '15:00:00', '2026-06-27', 3, 3),
+(690, '15:00:00', '2026-06-27', 3, 4);
 
 -- --------------------------------------------------------
 
@@ -1265,7 +1266,7 @@ ALTER TABLE `seat`
 -- AUTO_INCREMENT for table `showtime`
 --
 ALTER TABLE `showtime`
-  MODIFY `ShowtimeID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=652;
+  MODIFY `ShowtimeID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=691;
 
 --
 -- AUTO_INCREMENT for table `studio`
