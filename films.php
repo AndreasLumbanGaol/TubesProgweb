@@ -142,7 +142,8 @@ if (isset($_GET['set_location'])) {
                  <a href="#" class="movie-link" data-bs-toggle="modal" data-bs-target="#bookingModal" 
                     data-title="<?php echo htmlspecialchars($film['Title']); ?>" 
                     data-poster="<?php echo htmlspecialchars($film['PosterURL']); ?>" 
-                    data-duration="<?php echo $film['Duration']; ?>m">
+                    data-duration="<?php echo $film['Duration']; ?>m"
+                    data-trailer="<?php echo htmlspecialchars($film['TrailerURL'] ?? ''); ?>">
                      <div class="card movie-card">
                          <div class="poster-wrapper">
                              <img src="<?php echo htmlspecialchars($film['PosterURL']); ?>" class="movie-poster" alt="<?php echo htmlspecialchars($film['Title']); ?>">

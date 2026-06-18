@@ -165,6 +165,13 @@ if ($studio_types_query) {
                 <form id="booking-selection-form">
                     <input type="hidden" id="hidden-movie-poster" name="poster_url">
 
+                    <div class="mb-4 d-none" id="trailer-container">
+                        <div class="form-section-title">Trailer Film</div>
+                        <div class="ratio ratio-16x9 shadow-sm" style="border-radius: 12px; overflow: hidden; border: 1px solid rgba(212, 175, 55, 0.4); box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);">
+                            <iframe id="modal-movie-trailer" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        </div>
+                    </div>
+
                     <div class="mb-4">
                         <div class="form-section-title">Pilih Bioskop</div>
                         <div class="row g-3">
@@ -259,6 +266,63 @@ if ($studio_types_query) {
     let selectedDateLabel = null;
     let selectedTime = null;
     let selectedScheduleItem = null;
+
+    function convertToYoutubeEmbed(url) {
+        if (!url) return '';
+        url = url.trim();
+        
+        if (url.includes('/embed/')) {
+            return url;
+        }
+        
+        let videoId = '';
+        
+        if (url.includes('watch?v=')) {
+            const parts = url.split('watch?v=');
+            if (parts[1]) {
+                videoId = parts[1].split('&')[0].split('?')[0];
+            }
+        } 
+        else if (url.includes('youtu.be/')) {
+            const parts = url.split('youtu.be/');
+            if (parts[1]) {
+                videoId = parts[1].split('?')[0].split('/')[0];
+            }
+        }
+        else if (url.includes('/shorts/')) {
+            const parts = url.split('/shorts/');
+            if (parts[1]) {
+                videoId = parts[1].split('?')[0].split('/')[0];
+            }
+        }
+        else if (url.length === 11) {
+            videoId = url;
+        }
+        
+        if (videoId) {
+            let queryParams = '';
+            if (url.includes('?')) {
+                const searchStr = url.split('?')[1];
+                const searchParams = new URLSearchParams(searchStr);
+                searchParams.delete('v');
+                const finalStr = searchParams.toString();
+                if (finalStr) {
+                    queryParams = '?' + finalStr;
+                }
+            } else if (url.includes('&')) {
+                const searchStr = url.split('&').slice(1).join('&');
+                const searchParams = new URLSearchParams(searchStr);
+                searchParams.delete('v');
+                const finalStr = searchParams.toString();
+                if (finalStr) {
+                    queryParams = '?' + finalStr;
+                }
+            }
+            return `https://www.youtube.com/embed/${videoId}${queryParams}`;
+        }
+        
+        return url;
+    }
 
     const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
@@ -501,7 +565,28 @@ if ($studio_types_query) {
                 document.getElementById('hidden-movie-poster').value = triggerElement.getAttribute('data-poster');
                 document.getElementById('modal-movie-duration').querySelector('span').textContent = triggerElement.getAttribute('data-duration') || 'N/A';
 
+                // Handle YouTube trailer embed
+                const trailerUrl = triggerElement.getAttribute('data-trailer');
+                const trailerContainer = document.getElementById('trailer-container');
+                const trailerIframe = document.getElementById('modal-movie-trailer');
+                
+                if (trailerUrl && trailerUrl.trim() !== '') {
+                    trailerContainer.classList.remove('d-none');
+                    trailerIframe.src = convertToYoutubeEmbed(trailerUrl);
+                } else {
+                    trailerContainer.classList.add('d-none');
+                    trailerIframe.src = '';
+                }
+
                 updateStudioOptions();
+            });
+
+            bookingModal.addEventListener('hide.bs.modal', function() {
+                // Stop the trailer from playing when modal is closed
+                const trailerIframe = document.getElementById('modal-movie-trailer');
+                if (trailerIframe) {
+                    trailerIframe.src = '';
+                }
             });
         }
 

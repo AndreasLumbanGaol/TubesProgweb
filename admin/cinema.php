@@ -86,13 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $posterUrl = mysqli_real_escape_string($conn, $_POST['poster_url'] ?? '');
         $duration = intval($_POST['duration'] ?? 120);
         $rating = floatval($_POST['rating'] ?? 0.0);
+        $trailerUrl = mysqli_real_escape_string($conn, $_POST['trailer_url'] ?? '');
         
         $schedules = $_POST['schedules'] ?? [];
 
         if (!empty($judul) && !empty($genre) && !empty($posterUrl)) {
             if ($post_edit_id > 0) {
                 // Update Movie
-                $updateMovie = mysqli_query($conn, "UPDATE movie SET Title = '$judul', Duration = $duration, Genre = '$genre', Rating = $rating, PosterURL = '$posterUrl' WHERE MovieID = $post_edit_id");
+                $updateMovie = mysqli_query($conn, "UPDATE movie SET Title = '$judul', Duration = $duration, Genre = '$genre', Rating = $rating, PosterURL = '$posterUrl', TrailerURL = '$trailerUrl' WHERE MovieID = $post_edit_id");
                 if ($updateMovie) {
                     $movie_id = $post_edit_id;
                     
@@ -143,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } else {
                 // Insert Movie
-                $insertMovie = mysqli_query($conn, "INSERT INTO movie (Title, Duration, Genre, Rating, PosterURL) VALUES ('$judul', $duration, '$genre', $rating, '$posterUrl')");
+                $insertMovie = mysqli_query($conn, "INSERT INTO movie (Title, Duration, Genre, Rating, PosterURL, TrailerURL) VALUES ('$judul', $duration, '$genre', $rating, '$posterUrl', '$trailerUrl')");
                 if ($insertMovie) {
                     $movie_id = mysqli_insert_id($conn);
                     $showtimes_inserted = 0;
@@ -492,6 +493,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <label class="form-label">Rating Film (0.0 - 10.0)</label>
                                     <input type="number" name="rating" class="form-control" placeholder="Masukkan rating (0.0 jika coming soon)" step="0.1" min="0" max="10" value="<?php echo htmlspecialchars($movie_data['Rating'] ?? '0.0'); ?>" required>
                                 </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Link Trailer Film (Embed URL YouTube)</label>
+                                <input type="text" name="trailer_url" class="form-control" placeholder="Contoh: https://www.youtube.com/embed/OU3VMoEhqu0" value="<?php echo htmlspecialchars($movie_data['TrailerURL'] ?? ''); ?>">
+                                <div class="form-text text-muted-50 small" style="color: rgba(255,255,255,0.4)">Masukkan URL embed YouTube (misal: <code>https://www.youtube.com/embed/OU3VMoEhqu0</code>).</div>
                             </div>
 
                             <div class="border-top border-secondary my-4 pt-4">
