@@ -8,7 +8,7 @@ include_once __DIR__ . '/../koneksi.php';
 $page = 'cinema';
 
 $genres = ['Aksi', 'Drama', 'Komedi', 'Horror', 'Romantis', 'Sci-Fi', 'Animasi', 'Thriller'];
-$jadwalOptions = ['10:00', '12:00', '15:00'];
+$jadwalOptions = ['10:00', '12:00', '13:00', '15:00', '16:00', '19:00'];
 
 // Fetch all available theaters (Only allow Tixly Central, CGV Paskal 23, and XXI Botanica Mall)
 $theaters = [];
@@ -56,17 +56,7 @@ if ($edit_id > 0) {
                     ];
                 }
                 
-                $time_option = '';
-                $st_hour = date('H:i:s', strtotime($row['StartTime']));
-                if ($st_hour === '10:00:00') $time_option = '10:00';
-                elseif ($st_hour === '12:00:00') $time_option = '12:00';
-                elseif ($st_hour === '15:00:00') $time_option = '15:00';
-                // Fallbacks for older/other schedules
-                elseif ($st_hour === '07:00:00') $time_option = '10:00';
-                elseif ($st_hour === '13:00:00') $time_option = '12:00';
-                elseif ($st_hour === '16:00:00') $time_option = '15:00';
-                elseif ($st_hour === '19:00:00') $time_option = '15:00';
-                
+                $time_option = date('H:i', strtotime($row['StartTime']));
                 if ($time_option) {
                     $grouped[$key]['times'][] = $time_option;
                 }
@@ -89,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $trailerUrl = mysqli_real_escape_string($conn, $_POST['trailer_url'] ?? '');
         
         $schedules = $_POST['schedules'] ?? [];
+        $db_errors = [];
 
         if (!empty($judul) && !empty($genre) && !empty($posterUrl)) {
             if ($post_edit_id > 0) {
@@ -123,22 +114,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             if ($selected_studio_id > 0) {
                                 foreach ($selected_times as $j) {
-                                    $start_time = '';
-                                    if ($j === '10:00') $start_time = '10:00:00';
-                                    elseif ($j === '12:00') $start_time = '12:00:00';
-                                    elseif ($j === '15:00') $start_time = '15:00:00';
-
+                                    $start_time = date('H:i:s', strtotime($j));
                                     if ($start_time) {
-                                        mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
-                                        $showtimes_inserted++;
+                                        $res_insert = mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
+                                        if ($res_insert) {
+                                            $showtimes_inserted++;
+                                        } else {
+                                            $db_errors[] = "Gagal memasukkan jadwal ($play_date $start_time): " . mysqli_error($conn);
+                                        }
                                     }
                                 }
+                            } else {
+                                $db_errors[] = "Studio tidak ditemukan untuk bioskop ID $selected_theater_id dengan tipe $selected_studio_type";
                             }
                         }
                     }
-                    $message = "Film dan jadwal tayang berhasil diperbarui!";
-                    header("Location: index.php?message=" . urlencode($message));
-                    exit();
+                    if (empty($db_errors)) {
+                        $message = "Film dan jadwal tayang berhasil diperbarui!";
+                        header("Location: index.php?message=" . urlencode($message));
+                        exit();
+                    } else {
+                        $message = "Film diperbarui dengan " . count($db_errors) . " kesalahan jadwal: " . implode(", ", $db_errors);
+                    }
                 } else {
                     $message = "Gagal memperbarui film: " . mysqli_error($conn);
                 }
@@ -171,22 +168,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             if ($selected_studio_id > 0) {
                                 foreach ($selected_times as $j) {
-                                    $start_time = '';
-                                    if ($j === '10:00') $start_time = '10:00:00';
-                                    elseif ($j === '12:00') $start_time = '12:00:00';
-                                    elseif ($j === '15:00') $start_time = '15:00:00';
-
+                                    $start_time = date('H:i:s', strtotime($j));
                                     if ($start_time) {
-                                        mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
-                                        $showtimes_inserted++;
+                                        $res_insert = mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
+                                        if ($res_insert) {
+                                            $showtimes_inserted++;
+                                        } else {
+                                            $db_errors[] = "Gagal memasukkan jadwal ($play_date $start_time): " . mysqli_error($conn);
+                                        }
                                     }
                                 }
+                            } else {
+                                $db_errors[] = "Studio tidak ditemukan untuk bioskop ID $selected_theater_id dengan tipe $selected_studio_type";
                             }
                         }
                     }
-                    $message = "Film berhasil ditambahkan ke Database!";
-                    header("Location: index.php?message=" . urlencode($message));
-                    exit();
+                    if (empty($db_errors)) {
+                        $message = "Film berhasil ditambahkan ke Database!";
+                        header("Location: index.php?message=" . urlencode($message));
+                        exit();
+                    } else {
+                        $message = "Film ditambahkan dengan " . count($db_errors) . " kesalahan jadwal: " . implode(", ", $db_errors);
+                    }
                 } else {
                     $message = "Gagal menambahkan film: " . mysqli_error($conn);
                 }
@@ -420,6 +423,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ::-webkit-scrollbar-track { background: #1a0a0a; }
         ::-webkit-scrollbar-thumb { background: #3a2626; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #4a3636; }
+
+        .schedule-row {
+            border-top: 1px solid #3a2626 !important;
+            padding-top: 1.5rem !important;
+            margin-top: 1.5rem !important;
+        }
     </style>
 </head>
 <body>
@@ -505,6 +514,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <h5 class="text-warning mb-3">Atur Penjadwalan Bioskop</h5>
                             </div>
 
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <button type="button" class="btn-add-schedule mb-0" style="width: auto; padding: 10px 20px;" onclick="addScheduleRow()"><i class="fas fa-plus me-1"></i> Tambah Jadwal Tayang Baru</button>
+                                <button type="submit" class="btn-submit mb-0" style="float: none; padding: 10px 32px;"><?php echo $edit_id > 0 ? 'Simpan Perubahan' : 'Simpan Film & Jadwal'; ?></button>
+                            </div>
+
                             <!-- Showtime schedules container -->
                             <div id="schedulesContainer">
                                 
@@ -512,7 +526,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 if (empty($existing_schedules)) {
                                     $existing_schedules = [
                                         [
-                                            'theater_id' => '',
+                                            'theater_id' => !empty($theaters) ? $theaters[0]['TheaterID'] : '',
                                             'play_date' => date('Y-m-d'),
                                             'studio_type' => '',
                                             'times' => []
@@ -522,11 +536,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 
                                 foreach ($existing_schedules as $idx => $sched):
                                 ?>
-                                <div class="row g-3 align-items-center mb-4 schedule-row <?php echo $idx > 0 ? 'border-top border-secondary-subtle pt-3' : ''; ?>" data-index="<?php echo $idx; ?>">
+                                <div class="row g-3 align-items-center mb-4 schedule-row" data-index="<?php echo $idx; ?>">
                                     <div class="col-md-4">
                                         <label class="form-label small text-muted">Bioskop</label>
-                                        <select name="schedules[<?php echo $idx; ?>][theater_id]" class="form-select" required>
-                                            <option value="" disabled <?php echo empty($sched['theater_id']) ? 'selected' : ''; ?> hidden>Pilih Bioskop</option>
+                                        <select name="schedules[<?php echo $idx; ?>][theater_id]" class="form-select theater-select" onchange="updateStudioTypes(this)" required>
                                             <?php foreach ($theaters as $theater): ?>
                                             <option value="<?php echo $theater['TheaterID']; ?>" <?php echo $theater['TheaterID'] == $sched['theater_id'] ? 'selected' : ''; ?>>
                                                 <?php echo htmlspecialchars($theater['Name']); ?>
@@ -536,8 +549,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small text-muted">Tipe Studio</label>
-                                        <select name="schedules[<?php echo $idx; ?>][studio_type]" class="form-select" required>
-                                            <option value="" disabled <?php echo empty($sched['studio_type']) ? 'selected' : ''; ?> hidden>Pilih Tipe Studio</option>
+                                        <select name="schedules[<?php echo $idx; ?>][studio_type]" class="form-select studio-type-select" required>
                                             <option value="Regular" <?php echo $sched['studio_type'] == 'Regular' ? 'selected' : ''; ?>>Regular</option>
                                             <option value="Velvet" <?php echo $sched['studio_type'] == 'Velvet' ? 'selected' : ''; ?>>Velvet Class</option>
                                             <option value="Gold Class" <?php echo $sched['studio_type'] == 'Gold Class' ? 'selected' : ''; ?>>Gold Class</option>
@@ -569,10 +581,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             </div>
 
-                            <button type="button" class="btn-add-schedule mb-4" onclick="addScheduleRow()"><i class="fas fa-plus me-1"></i> Tambah Jadwal Tayang Baru</button>
-
-                            <button type="submit" class="btn-submit"><?php echo $edit_id > 0 ? 'Simpan Perubahan' : 'Simpan Film & Jadwal'; ?></button>
-
                         </div>
                     </div>
                 </form>
@@ -590,11 +598,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function addScheduleRow() {
             const container = document.getElementById('schedulesContainer');
             const template = `
-                <div class="row g-3 align-items-center mb-4 schedule-row border-top border-secondary-subtle pt-3" data-index="${scheduleIndex}">
+                <div class="row g-3 align-items-center mb-4 schedule-row" data-index="${scheduleIndex}">
                     <div class="col-md-4">
                         <label class="form-label small text-muted">Bioskop</label>
-                        <select name="schedules[${scheduleIndex}][theater_id]" class="form-select" required>
-                            <option value="" disabled selected hidden>Pilih Bioskop</option>
+                        <select name="schedules[${scheduleIndex}][theater_id]" class="form-select theater-select" onchange="updateStudioTypes(this)" required>
                             <?php foreach ($theaters as $theater): ?>
                             <option value="<?php echo $theater['TheaterID']; ?>"><?php echo htmlspecialchars($theater['Name']); ?></option>
                             <?php endforeach; ?>
@@ -602,11 +609,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small text-muted">Tipe Studio</label>
-                        <select name="schedules[${scheduleIndex}][studio_type]" class="form-select" required>
-                            <option value="" disabled selected hidden>Pilih Tipe Studio</option>
-                            <option value="Regular">Regular</option>
-                            <option value="Velvet">Velvet Class</option>
-                            <option value="Gold Class">Gold Class</option>
+                        <select name="schedules[${scheduleIndex}][studio_type]" class="form-select studio-type-select" required>
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -614,7 +617,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="d-flex flex-column gap-2">
                             <input type="date" name="schedules[${scheduleIndex}][play_date]" class="form-control mb-1" value="<?php echo date('Y-m-d'); ?>" required>
                             <div class="d-flex flex-wrap gap-2">
-                                <?php foreach (['10:00', '12:00', '15:00'] as $j): ?>
+                                <?php foreach ($jadwalOptions as $j): ?>
                                 <label class="chip">
                                     <input type="checkbox" name="schedules[${scheduleIndex}][times][]" value="<?php echo $j; ?>" onchange="toggleChipActive(this)">
                                     <?php echo $j; ?> WIB
@@ -629,7 +632,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
             `;
-            container.insertAdjacentHTML('beforeend', template);
+            container.insertAdjacentHTML('afterbegin', template);
+            
+            // Auto populate studio types for the pre-selected first theater
+            const newRow = container.querySelector(`.schedule-row[data-index="${scheduleIndex}"]`);
+            const theaterSelect = newRow.querySelector('.theater-select');
+            updateStudioTypes(theaterSelect);
+            
             scheduleIndex++;
         }
 
@@ -674,6 +683,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 previewText.style.display = 'block';
             }
         }
+
+        const theaterStudios = <?php echo json_encode($theater_studios); ?>;
+
+        function updateStudioTypes(theaterSelect) {
+            const row = theaterSelect.closest('.schedule-row');
+            const studioSelect = row.querySelector('.studio-type-select');
+            const theaterId = theaterSelect.value;
+            
+            // Simpan value terpilih sementara
+            const currentValue = studioSelect.getAttribute('data-temp-value') || studioSelect.value;
+            
+            studioSelect.innerHTML = '';
+            const availableTypes = theaterStudios[theaterId] || [];
+            
+            const allTypes = [
+                { value: 'Regular', label: 'Regular' },
+                { value: 'Velvet', label: 'Velvet Class' },
+                { value: 'Gold Class', label: 'Gold Class' }
+            ];
+            
+            allTypes.forEach(typeObj => {
+                if (availableTypes.includes(typeObj.value)) {
+                    const opt = document.createElement('option');
+                    opt.value = typeObj.value;
+                    opt.textContent = typeObj.label;
+                    if (typeObj.value === currentValue) {
+                        opt.selected = true;
+                    }
+                    studioSelect.appendChild(opt);
+                }
+            });
+        }
+
+        // On page load, initialize all select elements
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('.theater-select').forEach(select => {
+                const row = select.closest('.schedule-row');
+                const studioSelect = row.querySelector('.studio-type-select');
+                if (studioSelect) {
+                    studioSelect.setAttribute('data-temp-value', studioSelect.value);
+                }
+                updateStudioTypes(select);
+            });
+        });
 
         posterUrlInput.addEventListener('input', updatePreview);
         window.addEventListener('load', updatePreview);
