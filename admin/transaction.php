@@ -228,9 +228,18 @@ if ($res_rsl) {
         .filter-select:focus { border-color: #d4af37; outline: none; }
         .filter-select option { background-color: #2d1a1a; color: #ffffff; }
 
-        .table { color: #ffffff; margin-bottom: 0; }
-        .table thead th { color: #d4af37; font-weight: 500; font-size: 13px; border-bottom: 1px solid #3a2626; padding: 12px 8px; background: transparent; }
-        .table tbody td { color: #ccc; font-size: 14px; border-bottom: 1px solid #2a1a1a; padding: 14px 8px; vertical-align: middle; }
+        .table { 
+            --bs-table-bg: transparent; 
+            --bs-table-color: #ffffff; 
+            --bs-table-border-color: #3a2626; 
+            --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+            --bs-table-hover-bg: rgba(212, 175, 55, 0.05);
+            color: #ffffff; 
+            margin-bottom: 0; 
+        }
+        .table th, .table td { background-color: transparent !important; }
+        .table thead th { color: #d4af37 !important; font-weight: 500; font-size: 13px; border-bottom: 1px solid #3a2626 !important; padding: 12px 8px; }
+        .table tbody td { color: #ccc !important; font-size: 14px; border-bottom: 1px solid #2a1a1a !important; padding: 14px 8px; vertical-align: middle; }
         
         .badge-success { background-color: #28a745; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 11px; }
         .badge-pending { background-color: #ffc107; color: #000; padding: 4px 12px; border-radius: 12px; font-size: 11px; }

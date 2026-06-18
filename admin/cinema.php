@@ -8,7 +8,7 @@ include_once __DIR__ . '/../koneksi.php';
 $page = 'cinema';
 
 $genres = ['Aksi', 'Drama', 'Komedi', 'Horror', 'Romantis', 'Sci-Fi', 'Animasi', 'Thriller'];
-$jadwalOptions = ['07.00 - 09.00', '10.00 - 12.00', '13.00 - 15.00', '16.00 - 18.00', '19.00 - 21.00'];
+$jadwalOptions = ['10:00', '12:00', '15:00'];
 
 // Fetch all available theaters (Only allow Tixly Central, CGV Paskal 23, and XXI Botanica Mall)
 $theaters = [];
@@ -58,11 +58,14 @@ if ($edit_id > 0) {
                 
                 $time_option = '';
                 $st_hour = date('H:i:s', strtotime($row['StartTime']));
-                if ($st_hour === '07:00:00') $time_option = '07.00 - 09.00';
-                elseif ($st_hour === '10:00:00') $time_option = '10.00 - 12.00';
-                elseif ($st_hour === '13:00:00') $time_option = '13.00 - 15.00';
-                elseif ($st_hour === '16:00:00') $time_option = '16.00 - 18.00';
-                elseif ($st_hour === '19:00:00') $time_option = '19.00 - 21.00';
+                if ($st_hour === '10:00:00') $time_option = '10:00';
+                elseif ($st_hour === '12:00:00') $time_option = '12:00';
+                elseif ($st_hour === '15:00:00') $time_option = '15:00';
+                // Fallbacks for older/other schedules
+                elseif ($st_hour === '07:00:00') $time_option = '10:00';
+                elseif ($st_hour === '13:00:00') $time_option = '12:00';
+                elseif ($st_hour === '16:00:00') $time_option = '15:00';
+                elseif ($st_hour === '19:00:00') $time_option = '15:00';
                 
                 if ($time_option) {
                     $grouped[$key]['times'][] = $time_option;
@@ -120,11 +123,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if ($selected_studio_id > 0) {
                                 foreach ($selected_times as $j) {
                                     $start_time = '';
-                                    if ($j === '07.00 - 09.00') $start_time = '07:00:00';
-                                    elseif ($j === '10.00 - 12.00') $start_time = '10:00:00';
-                                    elseif ($j === '13.00 - 15.00') $start_time = '13:00:00';
-                                    elseif ($j === '16.00 - 18.00') $start_time = '16:00:00';
-                                    elseif ($j === '19.00 - 21.00') $start_time = '19:00:00';
+                                    if ($j === '10:00') $start_time = '10:00:00';
+                                    elseif ($j === '12:00') $start_time = '12:00:00';
+                                    elseif ($j === '15:00') $start_time = '15:00:00';
 
                                     if ($start_time) {
                                         mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
@@ -170,11 +171,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if ($selected_studio_id > 0) {
                                 foreach ($selected_times as $j) {
                                     $start_time = '';
-                                    if ($j === '07.00 - 09.00') $start_time = '07:00:00';
-                                    elseif ($j === '10.00 - 12.00') $start_time = '10:00:00';
-                                    elseif ($j === '13.00 - 15.00') $start_time = '13:00:00';
-                                    elseif ($j === '16.00 - 18.00') $start_time = '16:00:00';
-                                    elseif ($j === '19.00 - 21.00') $start_time = '19:00:00';
+                                    if ($j === '10:00') $start_time = '10:00:00';
+                                    elseif ($j === '12:00') $start_time = '12:00:00';
+                                    elseif ($j === '15:00') $start_time = '15:00:00';
 
                                     if ($start_time) {
                                         mysqli_query($conn, "INSERT INTO showtime (StartTime, PlayDate, MovieID, StudioID) VALUES ('$start_time', '$play_date', $movie_id, $selected_studio_id)");
@@ -548,7 +547,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                 ?>
                                                 <label class="chip <?php echo $active; ?>">
                                                     <input type="checkbox" name="schedules[<?php echo $idx; ?>][times][]" value="<?php echo $j; ?>" <?php echo $checked; ?> onchange="toggleChipActive(this)">
-                                                    <?php echo explode(' - ', $j)[0]; ?>
+                                                    <?php echo $j; ?> WIB
                                                 </label>
                                                 <?php endforeach; ?>
                                             </div>
@@ -608,10 +607,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="d-flex flex-column gap-2">
                             <input type="date" name="schedules[${scheduleIndex}][play_date]" class="form-control mb-1" value="<?php echo date('Y-m-d'); ?>" required>
                             <div class="d-flex flex-wrap gap-2">
-                                <?php foreach ($jadwalOptions as $j): ?>
+                                <?php foreach (['10:00', '12:00', '15:00'] as $j): ?>
                                 <label class="chip">
                                     <input type="checkbox" name="schedules[${scheduleIndex}][times][]" value="<?php echo $j; ?>" onchange="toggleChipActive(this)">
-                                    <?php echo explode(' - ', $j)[0]; ?>
+                                    <?php echo $j; ?> WIB
                                 </label>
                                 <?php endforeach; ?>
                             </div>

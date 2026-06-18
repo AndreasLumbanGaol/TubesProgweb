@@ -86,9 +86,18 @@ $movies_query = mysqli_query($conn, "SELECT * FROM movie ORDER BY MovieID DESC")
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .panel-title { color: #ffffff; font-size: 18px; font-weight: 600; margin: 0; }
         
-        .table { color: #ffffff; margin-bottom: 0; }
-        .table thead th { color: #d4af37; font-weight: 500; font-size: 13px; border-bottom: 1px solid #3a2626; padding: 12px 8px; background: transparent; }
-        .table tbody td { color: #ccc; font-size: 14px; border-bottom: 1px solid #2a1a1a; padding: 14px 8px; vertical-align: middle; }
+        .table { 
+            --bs-table-bg: transparent; 
+            --bs-table-color: #ffffff; 
+            --bs-table-border-color: #3a2626; 
+            --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+            --bs-table-hover-bg: rgba(212, 175, 55, 0.05);
+            color: #ffffff; 
+            margin-bottom: 0; 
+        }
+        .table th, .table td { background-color: transparent !important; }
+        .table thead th { color: #d4af37 !important; font-weight: 500; font-size: 13px; border-bottom: 1px solid #3a2626 !important; padding: 12px 8px; }
+        .table tbody td { color: #ccc !important; border-bottom: 1px solid #2a1a1a !important; padding: 14px 8px; vertical-align: middle; }
         .movie-poster-thumb { width: 45px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #d4af37; }
         
         .btn-add { background-color: #d4af37; color: #000; border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; text-decoration: none; transition: 0.3s; }

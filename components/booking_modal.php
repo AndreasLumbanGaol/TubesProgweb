@@ -73,6 +73,69 @@ if ($studio_types_query) {
     .btn-grid-option { background-color: #241414; border: 1px solid #4a2d2d; color: #ccc; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-align: center; min-width: 90px; }
     .btn-grid-option:hover { background-color: #381f1f; border-color: #d4af37; color: #fff; }
     .btn-grid-option.active { background: linear-gradient(135deg, #b30000 0%, #7e0000 100%); border-color: #d4af37 !important; color: #fff !important; box-shadow: 0 0 10px rgba(179, 0, 0, 0.4); }
+
+    .date-strip-container {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: #3a2626 transparent;
+    }
+    .date-strip-container::-webkit-scrollbar {
+        height: 6px;
+    }
+    .date-strip-container::-webkit-scrollbar-thumb {
+        background: #3a2626;
+        border-radius: 3px;
+    }
+    .date-item {
+        flex: 0 0 auto;
+        width: 70px;
+        height: 70px;
+        background-color: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .date-item:hover:not(.disabled) {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(212, 175, 55, 0.4);
+    }
+    .date-item.active {
+        background: linear-gradient(135deg, #d4af37 0%, #b8962e 100%);
+        border-color: #d4af37 !important;
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
+    }
+    .date-item.active .date-day-name {
+        color: #000000 !important;
+        font-weight: 700;
+    }
+    .date-item.active .date-day-num {
+        color: #000000 !important;
+        font-weight: 800;
+    }
+    .date-day-name {
+        font-size: 11px;
+        color: #888;
+        margin-bottom: 2px;
+        text-transform: capitalize;
+    }
+    .date-day-num {
+        font-size: 18px;
+        font-weight: bold;
+        color: #fff;
+    }
+    .date-item.disabled {
+        opacity: 0.2;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
 </style>
 
 <div class="modal fade tixly-modal" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
@@ -163,8 +226,8 @@ if ($studio_types_query) {
 
                     <div class="mb-4">
                         <div class="form-section-title">Pilih Tanggal</div>
-                        <div class="selection-grid-container" id="date-options-container">
-                            <span class="text-muted fs-7">Pilih bioskop dan studio terlebih dahulu...</span>
+                        <div class="date-strip-container" id="date-strip-container">
+                            <span class="text-muted fs-7">Pilih Bioskop dan Studio Terlebih Dahulu...</span>
                         </div>
                     </div>
 
@@ -197,23 +260,78 @@ if ($studio_types_query) {
     let selectedTime = null;
     let selectedScheduleItem = null;
 
+    const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+
+    function generateDateStrip() {
+        const container = document.getElementById('date-strip-container');
+        container.innerHTML = '';
+        
+        // Generate 7 days starting from today
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() + i);
+            
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const dateNum = String(d.getDate()).padStart(2, '0');
+            const dateString = `${year}-${month}-${dateNum}`; // YYYY-MM-DD
+            
+            const dayIndex = d.getDay();
+            let dayName = dayNames[dayIndex];
+            if (i === 0) {
+                dayName = "Hari ini";
+            }
+            
+            const dateItem = document.createElement('div');
+            dateItem.className = 'date-item disabled';
+            dateItem.id = `date-item-${dateString}`;
+            dateItem.setAttribute('data-date', dateString);
+            
+            // Format Indonesian full date label
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            let formattedLabel = d.toLocaleDateString('id-ID', options);
+            formattedLabel = formattedLabel.charAt(0).toUpperCase() + formattedLabel.slice(1);
+            dateItem.setAttribute('data-label', formattedLabel);
+            
+            dateItem.innerHTML = `
+                <span class="date-day-name">${dayName}</span>
+                <span class="date-day-num">${d.getDate()}</span>
+            `;
+            
+            dateItem.onclick = function() {
+                if (dateItem.classList.contains('disabled')) return;
+                
+                document.querySelectorAll('#date-strip-container .date-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                dateItem.classList.add('active');
+                
+                selectedDateLabel = dateItem.getAttribute('data-label');
+                selectDateByRaw(dateString);
+            };
+            
+            container.appendChild(dateItem);
+        }
+    }
+
     function fetchJadwal() {
         const movieTitle = document.getElementById('modal-movie-title').textContent;
         const checkedCinema = document.querySelector('input[name="cinema"]:checked');
         const checkedStudio = document.querySelector('input[name="studio_type"]:checked');
-        const dateContainer = document.getElementById('date-options-container');
+        const dateContainer = document.getElementById('date-strip-container');
         const timeContainer = document.getElementById('time-options-container');
 
-        // Reset
+        // Reset state
         allSchedules = [];
         selectedDateLabel = null;
         selectedTime = null;
         selectedScheduleItem = null;
+        
         dateContainer.innerHTML = '<span class="text-muted fs-7">Mencari Jadwal...</span>';
         timeContainer.innerHTML = '<span class="text-muted fs-7">Pilih tanggal terlebih dahulu...</span>';
 
         if (!checkedCinema || !checkedStudio) {
-            dateContainer.innerHTML = '<span class="text-muted fs-7">Pilih bioskop dan studio terlebih dahulu</span>';
+            dateContainer.innerHTML = '<span class="text-muted fs-7">Pilih Bioskop & Studio Terlebih Dahulu...</span>';
             return;
         }
 
@@ -223,59 +341,64 @@ if ($studio_types_query) {
         fetch(`api/api_jadwal.php?movie=${encodeURIComponent(movieTitle)}&cinema=${encodeURIComponent(selectedCinema)}&type=${encodeURIComponent(selectedStudio)}`)
             .then(response => response.json())
             .then(data => {
-                dateContainer.innerHTML = ''; 
-                if(data.length > 0) {
+                if (data.length > 0) {
                     allSchedules = data;
                     
-                    // Extract unique dates
-                    const uniqueDates = [];
-                    const seenDates = new Set();
+                    // Render date strip structure
+                    generateDateStrip();
                     
-                    data.forEach(item => {
-                        if (!seenDates.has(item.date_label)) {
-                            seenDates.add(item.date_label);
-                            uniqueDates.push({
-                                label: item.date_label,
-                                raw_date: item.raw_date
-                            });
+                    // Enable items that have schedules
+                    const availableDates = data.map(item => item.raw_date);
+                    let hasAvailableDate = false;
+                    
+                    document.querySelectorAll('#date-strip-container .date-item').forEach(item => {
+                        const itemDate = item.getAttribute('data-date');
+                        if (availableDates.includes(itemDate)) {
+                            item.classList.remove('disabled');
+                            hasAvailableDate = true;
                         }
                     });
                     
-                    uniqueDates.forEach(dateObj => {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'btn-grid-option';
-                        btn.textContent = dateObj.label;
-                        btn.onclick = () => selectDate(dateObj.label, btn);
-                        dateContainer.appendChild(btn);
-                    });
+                    if (hasAvailableDate) {
+                        // Auto-select first available date
+                        const firstAvailable = dateContainer.querySelector('.date-item:not(.disabled)');
+                        if (firstAvailable) {
+                            firstAvailable.click();
+                        }
+                    } else {
+                        dateContainer.innerHTML = '<span class="text-danger fs-7">Jadwal tidak tersedia untuk 7 hari ke depan.</span>';
+                        timeContainer.innerHTML = '<span class="text-muted fs-7">Pilih tanggal terlebih dahulu...</span>';
+                    }
                 } else {
-                    dateContainer.innerHTML = '<span class="text-muted fs-7">Jadwal tidak tersedia</span>';
+                    dateContainer.innerHTML = '<span class="text-danger fs-7">Jadwal tidak tersedia</span>';
+                    timeContainer.innerHTML = '<span class="text-muted fs-7">Pilih tanggal terlebih dahulu...</span>';
                 }
             })
             .catch(error => {
-                dateContainer.innerHTML = '<span class="text-muted fs-7">Gagal memuat jadwal</span>';
+                dateContainer.innerHTML = '<span class="text-danger fs-7">Gagal memuat jadwal</span>';
+                timeContainer.innerHTML = '<span class="text-muted fs-7">Pilih tanggal terlebih dahulu...</span>';
             });
     }
 
-    function selectDate(dateLabel, btnElement) {
-        selectedDateLabel = dateLabel;
+    function selectDateByRaw(rawDate) {
+        selectedDateLabel = null;
         selectedTime = null;
         selectedScheduleItem = null;
         
-        // Remove active class from other date buttons
-        document.querySelectorAll('#date-options-container .btn-grid-option').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        btnElement.classList.add('active');
-        
-        // Populate times for the selected date
         const timeContainer = document.getElementById('time-options-container');
         timeContainer.innerHTML = '';
         
-        const filteredTimes = allSchedules.filter(j => j.date_label === dateLabel);
+        const filteredTimes = allSchedules.filter(j => j.raw_date === rawDate);
         
         if (filteredTimes.length > 0) {
+            // Find full date label from DOM
+            const dateItem = document.getElementById(`date-item-${rawDate}`);
+            if (dateItem) {
+                selectedDateLabel = dateItem.getAttribute('data-label');
+            } else {
+                selectedDateLabel = filteredTimes[0].date_label;
+            }
+            
             filteredTimes.forEach(j => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -285,7 +408,7 @@ if ($studio_types_query) {
                 timeContainer.appendChild(btn);
             });
         } else {
-            timeContainer.innerHTML = '<span class="text-muted fs-7">Jam tayang tidak tersedia</span>';
+            timeContainer.innerHTML = '<span class="text-danger fs-7">Jadwal tidak tersedia untuk tanggal ini. Silakan pilih tanggal lain.</span>';
         }
     }
 
